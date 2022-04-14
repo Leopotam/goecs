@@ -23,7 +23,7 @@ func TestQueryWithOneInc(t *testing.T) {
 		i++
 	}
 	if i != 2 {
-		t.Fatalf("invalid entities count in query.")
+		t.Errorf("invalid entities count in query.")
 	}
 	w.Destroy()
 }
@@ -42,7 +42,7 @@ func TestQueryWithTwoInc(t *testing.T) {
 		i++
 	}
 	if i != 0 {
-		t.Fatalf("invalid entities count in query.")
+		t.Errorf("invalid entities count in query.")
 	}
 
 	p1.Add(e2)
@@ -51,7 +51,7 @@ func TestQueryWithTwoInc(t *testing.T) {
 		i++
 	}
 	if i != 1 {
-		t.Fatalf("invalid entities count in query.")
+		t.Errorf("invalid entities count in query.")
 	}
 
 	p2.Add(e1)
@@ -60,7 +60,7 @@ func TestQueryWithTwoInc(t *testing.T) {
 		i++
 	}
 	if i != 2 {
-		t.Fatalf("invalid entities count in query.")
+		t.Errorf("invalid entities count in query.")
 	}
 
 	w.Destroy()
@@ -79,7 +79,7 @@ func TestQueryWithOneIncOneExc(t *testing.T) {
 		i++
 	}
 	if i != 1 {
-		t.Fatalf("invalid entities count in query.")
+		t.Errorf("invalid entities count in query.")
 	}
 
 	q2 := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
@@ -88,7 +88,7 @@ func TestQueryWithOneIncOneExc(t *testing.T) {
 		i++
 	}
 	if i != 0 {
-		t.Fatalf("invalid entities count in query.")
+		t.Errorf("invalid entities count in query.")
 	}
 	w.Destroy()
 }

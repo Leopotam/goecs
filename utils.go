@@ -51,7 +51,7 @@ func (s *sparseSet) Set(idx int) (denseIdx int, isNew bool) {
 func (s *sparseSet) Get(idx int) int {
 	if DEBUG {
 		if idx < 0 || idx >= len(s.sparse) {
-			panic("invalid idx")
+			panic("Cant touch invalid entity.")
 		}
 		if s.sparse[idx] == 0 {
 			panic("not set")
@@ -63,7 +63,7 @@ func (s *sparseSet) Get(idx int) int {
 func (s *sparseSet) Has(idx int) bool {
 	if DEBUG {
 		if idx < 0 || idx >= len(s.sparse) {
-			panic("invalid idx")
+			panic("Cant touch invalid entity.")
 		}
 	}
 	return s.sparse[idx] > 0

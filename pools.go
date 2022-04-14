@@ -5,6 +5,11 @@
 
 package ecs
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type IEcsReset interface {
 	Reset()
 }
@@ -35,7 +40,11 @@ func newPool[T any](world *World, denseCapacity int, sparseCapacity int, recycle
 }
 
 func (p *Pool[T]) Add(entity int) *T {
-	// TODO: debug check for exist components.
+	if DEBUG {
+		if p.Has(entity) {
+			panic(fmt.Sprintf("Component \"%s\" already attached to entity.", reflect.TypeOf((*T)(nil)).Name()))
+		}
+	}
 	idx, isNew := p.sparseSet.Set(entity)
 	if isNew {
 		if DEBUG {
@@ -55,7 +64,11 @@ func (p *Pool[T]) Add(entity int) *T {
 }
 
 func (p *Pool[T]) Get(entity int) *T {
-	// TODO: debug check that component exists.
+	if DEBUG {
+		if !p.Has(entity) {
+			panic(fmt.Sprintf("Component \"%s\" not attached to entity.", reflect.TypeOf((*T)(nil)).Name()))
+		}
+	}
 	return &p.items[p.sparseSet.Get(entity)]
 }
 
@@ -68,6 +81,11 @@ func (p *Pool[T]) Resize(capacity int) {
 }
 
 func (p *Pool[T]) Has(entity int) bool {
+	if DEBUG {
+		if !debugCheckEntityAlive(p.world, entity) {
+			panic("Cant touch destroyed entity.")
+		}
+	}
 	return p.sparseSet.Has(entity)
 }
 
