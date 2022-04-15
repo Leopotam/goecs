@@ -15,6 +15,7 @@ type C1 struct{}
 type C2 struct{ ID int }
 type C3 struct{}
 type C4 struct{}
+type C5 struct{}
 
 func (c2 *C2) Reset() {
 	c2.ID = -1
@@ -44,9 +45,7 @@ func TestWorldEmptyEntity(t *testing.T) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
-		if world != nil {
-			world.Destroy()
-		}
+		world.Destroy()
 	}(w)
 	w.NewEntity()
 	w.Destroy()
@@ -59,9 +58,7 @@ func TestWorldDelInvalidEntity(t *testing.T) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
-		if world != nil {
-			world.Destroy()
-		}
+		world.Destroy()
 	}(w)
 	w.DelEntity(3)
 	t.Errorf("code should panic.")

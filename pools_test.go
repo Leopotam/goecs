@@ -67,17 +67,75 @@ func TestComponentAutoReset(t *testing.T) {
 	w.Destroy()
 }
 
-func TestInvalidGet(t *testing.T) {
+func TestGetAdditionalInfo(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
+	if w != p.GetWorld() {
+		t.Errorf("invalid world in pool.")
+	}
+}
+
+func TestInvalidAdd(t *testing.T) {
 	w := ecs.NewWorld()
 	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
-		if world != nil {
-			world.Destroy()
+		world.Destroy()
+	}(w)
+	p := ecs.GetPool[C1](w)
+	e := w.NewEntity()
+	p.Add(e)
+	p.Add(e)
+	t.Errorf("code should panic.")
+}
+
+func TestInvalidGet1(t *testing.T) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic.")
 		}
+		world.Destroy()
 	}(w)
 	p := ecs.GetPool[C2](w)
 	p.Get(0)
 	t.Errorf("code should panic.")
+}
+
+func TestInvalidGet2(t *testing.T) {
+	w := ecs.NewWorld()
+	e := w.NewEntity()
+	defer func(world *ecs.World, entity int) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic.")
+		}
+		world.DelEntity(entity)
+		world.Destroy()
+	}(w, e)
+	p := ecs.GetPool[C2](w)
+	p.Get(e)
+	t.Errorf("code should panic.")
+}
+
+func TestInvalidDel1(t *testing.T) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic.")
+		}
+		world.Destroy()
+	}(w)
+	p := ecs.GetPool[C2](w)
+	p.Del(0)
+	t.Errorf("code should panic.")
+}
+
+func TestInvalidDel2(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
+	e := w.NewEntity()
+	p.Del(e)
+	w.DelEntity(e)
+	w.Destroy()
 }

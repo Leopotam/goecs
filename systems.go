@@ -55,7 +55,7 @@ func (s *Systems) Add(system any) *Systems {
 		case IDestroySystem:
 		case IPostDestroySystem:
 		default:
-			panic(fmt.Sprintf("invalid system type \"%s\".", reflect.TypeOf(system).Name()))
+			panic(fmt.Sprintf("invalid system type \"%s\".", reflect.TypeOf(system).String()))
 		}
 	}
 	s.all = append(s.all, system)
@@ -72,7 +72,7 @@ func (s *Systems) Init() {
 			if DEBUG {
 				worldName := debugCheckSystemsForLeakedEntities(s)
 				if len(worldName) > 0 {
-					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.PreInit().", worldName, reflect.TypeOf(system).Name()))
+					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.PreInit().", worldName, reflect.TypeOf(system).String()))
 				}
 			}
 		}
@@ -83,7 +83,7 @@ func (s *Systems) Init() {
 			if DEBUG {
 				worldName := debugCheckSystemsForLeakedEntities(s)
 				if len(worldName) > 0 {
-					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.Init().", worldName, reflect.TypeOf(system).Name()))
+					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.Init().", worldName, reflect.TypeOf(system).String()))
 				}
 			}
 		}
@@ -96,7 +96,7 @@ func (s *Systems) Run() {
 		if DEBUG {
 			worldName := debugCheckSystemsForLeakedEntities(s)
 			if len(worldName) > 0 {
-				panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.Run().", worldName, reflect.TypeOf(system).Name()))
+				panic(fmt.Sprintf("Empty entity detected in world \"%s\" after %s.Run().", worldName, reflect.TypeOf(system).String()))
 			}
 		}
 	}
@@ -109,7 +109,7 @@ func (s *Systems) Destroy() {
 			if DEBUG {
 				worldName := debugCheckSystemsForLeakedEntities(s)
 				if len(worldName) > 0 {
-					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.Destroy().", worldName, reflect.TypeOf(destroySystem).Name()))
+					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after %s.Destroy().", worldName, reflect.TypeOf(destroySystem).String()))
 				}
 			}
 		}
@@ -120,7 +120,7 @@ func (s *Systems) Destroy() {
 			if DEBUG {
 				worldName := debugCheckSystemsForLeakedEntities(s)
 				if len(worldName) > 0 {
-					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after {%s}.PostDestroy().", worldName, reflect.TypeOf(postDestroySystem).Name()))
+					panic(fmt.Sprintf("Empty entity detected in world \"%s\" after %s.PostDestroy().", worldName, reflect.TypeOf(postDestroySystem).String()))
 				}
 			}
 		}
@@ -129,11 +129,21 @@ func (s *Systems) Destroy() {
 	s.run = s.run[:0]
 }
 
+func (s *Systems) AddWorld(world *World, name string) *Systems {
+	if DEBUG {
+		if _, ok := s.namedWorlds[name]; ok {
+			panic(fmt.Sprintf("World with name \"%s\" already added.", name))
+		}
+	}
+	s.namedWorlds[name] = world
+	return s
+}
+
 func (s *Systems) GetWorld() *World {
 	return s.defWorld
 }
 
-func (s *Systems) GetNamedWorld(name string) *World {
+func (s *Systems) GetWorldByName(name string) *World {
 	if world, ok := s.namedWorlds[name]; ok {
 		return world
 	}
@@ -141,12 +151,14 @@ func (s *Systems) GetNamedWorld(name string) *World {
 }
 
 func debugCheckSystemsForLeakedEntities(s *Systems) string {
-	if debugCheckWorldForLeakedEntities(s.defWorld) {
-		return "default"
-	}
-	for name, world := range s.namedWorlds {
-		if debugCheckWorldForLeakedEntities(world) {
-			return name
+	if DEBUG {
+		if debugCheckWorldForLeakedEntities(s.defWorld) {
+			return "default"
+		}
+		for name, world := range s.namedWorlds {
+			if debugCheckWorldForLeakedEntities(world) {
+				return name
+			}
 		}
 	}
 	return ""

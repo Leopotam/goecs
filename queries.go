@@ -91,10 +91,7 @@ func (i *Iter) Next() bool {
 			continue
 		}
 		for idx, pool := range i.q.inc {
-			if idx == i.poolIdx {
-				continue
-			}
-			if !pool.Has(i.entity) {
+			if idx != i.poolIdx && !pool.Has(i.entity) {
 				i.entity = -1
 				break
 			}
@@ -146,10 +143,7 @@ func (i *IterWithExc) Next() bool {
 			continue
 		}
 		for idx, pool := range i.q.inc {
-			if idx == i.poolIdx {
-				continue
-			}
-			if !pool.Has(i.entity) {
+			if idx != i.poolIdx && !pool.Has(i.entity) {
 				i.entity = -1
 				break
 			}
