@@ -255,7 +255,7 @@ func BenchmarkQueryWithTwoIncAndOneExc(b *testing.B) {
 	w := ecs.NewWorld()
 	p1 := ecs.GetPool[C1](w)
 	p2 := ecs.GetPool[C2](w)
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 100000; i++ {
 		e := w.NewEntity()
 		p1.Add(e)
 		p2.Add(e)
