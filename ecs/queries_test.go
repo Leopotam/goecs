@@ -6,8 +6,9 @@
 package ecs_test
 
 import (
-	"goecs/ecs"
 	"testing"
+
+	"github.com/leopotam/goecs/ecs"
 )
 
 func TestQueryWithOneInc(t *testing.T) {

@@ -6,9 +6,10 @@
 package ecs_test
 
 import (
-	"goecs/ecs"
 	"math"
 	"testing"
+
+	"github.com/leopotam/goecs/ecs"
 )
 
 type C1 struct{}
