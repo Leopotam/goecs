@@ -10,12 +10,16 @@ import (
 )
 
 type Query struct {
-	inc []IEcsPool
+	inc   []IEcsPool
+	locks int
+	iter  Iter
 }
 
 type QueryWithExc struct {
-	inc []IEcsPool
-	exc []IEcsPool
+	inc   []IEcsPool
+	exc   []IEcsPool
+	locks int
+	iter  IterWithExc
 }
 
 type IInc interface {
@@ -30,6 +34,7 @@ func NewQuery[I IInc](w *World) *Query {
 	q := &Query{}
 	var i I
 	q.inc = i.Fill(w)
+	q.iter.q = q
 	return q
 }
 
@@ -39,6 +44,7 @@ func NewQueryWithExc[I IInc, E IExc](w *World) *QueryWithExc {
 	var e E
 	q.inc = i.Fill(w)
 	q.exc = e.Fill(w)
+	q.iter.q = q
 	return q
 }
 
@@ -46,6 +52,7 @@ type Iter struct {
 	q       *Query
 	poolIdx int
 	indices []int
+	length  int
 	idx     int
 	entity  int
 }
@@ -54,36 +61,43 @@ type IterWithExc struct {
 	q       *QueryWithExc
 	poolIdx int
 	indices []int
+	length  int
 	idx     int
 	entity  int
 }
 
 func (q *Query) Iter() Iter {
-	itemsCount := math.MaxInt
-	var poolIdx int
-	var indices []int
-	for idx, pool := range q.inc {
-		newMin := pool.GetItemsCount()
-		if newMin < itemsCount {
-			itemsCount = newMin
-			indices = pool.GetIndices()
-			poolIdx = idx
+	if q.locks == 0 {
+		itemsCount := math.MaxInt
+		var poolIdx int
+		for idx, pool := range q.inc {
+			newMin := pool.GetItemsCount()
+			if newMin < itemsCount {
+				itemsCount = newMin
+				poolIdx = idx
+			}
 		}
+		q.iter.poolIdx = poolIdx
+		q.iter.indices = q.inc[poolIdx].GetIndices()
+		q.iter.length = len(q.iter.indices)
 	}
-	return Iter{
-		q:       q,
-		poolIdx: poolIdx,
-		indices: indices,
-		idx:     -1,
-		entity:  -1,
-	}
+	q.locks++
+	iter := q.iter
+	iter.idx = -1
+	iter.entity = -1
+	return iter
 }
 
 func (i *Iter) Next() bool {
 	for {
 		i.idx++
-		if i.idx >= len(i.indices) {
-			i.unlock()
+		if i.idx >= i.length {
+			i.q.locks--
+			if DEBUG {
+				if i.q.locks < 0 {
+					panic("Query lock/unlock invalid balance.")
+				}
+			}
 			return false
 		}
 		i.entity = i.indices[i.idx]
@@ -106,36 +120,38 @@ func (i *Iter) GetEntity() int {
 	return i.entity
 }
 
-func (i *Iter) unlock() {
-
-}
-
 func (q *QueryWithExc) Iter() IterWithExc {
-	itemsCount := math.MaxInt
-	var poolIdx int
-	var indices []int
-	for idx, pool := range q.inc {
-		newMin := pool.GetItemsCount()
-		if newMin < itemsCount {
-			itemsCount = newMin
-			indices = pool.GetIndices()
-			poolIdx = idx
+	if q.locks == 0 {
+		itemsCount := math.MaxInt
+		var poolIdx int
+		for idx, pool := range q.inc {
+			newMin := pool.GetItemsCount()
+			if newMin < itemsCount {
+				itemsCount = newMin
+				poolIdx = idx
+			}
 		}
+		q.iter.poolIdx = poolIdx
+		q.iter.indices = q.inc[poolIdx].GetIndices()
+		q.iter.length = len(q.iter.indices)
 	}
-	return IterWithExc{
-		q:       q,
-		poolIdx: poolIdx,
-		indices: indices,
-		idx:     -1,
-		entity:  -1,
-	}
+	q.locks++
+	iter := q.iter
+	iter.idx = -1
+	iter.entity = -1
+	return iter
 }
 
 func (i *IterWithExc) Next() bool {
 	for {
 		i.idx++
-		if i.idx >= len(i.indices) {
-			i.unlock()
+		if i.idx >= i.length {
+			i.q.locks--
+			if DEBUG {
+				if i.q.locks < 0 {
+					panic("Query lock/unlock invalid balance.")
+				}
+			}
 			return false
 		}
 		i.entity = i.indices[i.idx]
@@ -164,10 +180,6 @@ func (i *IterWithExc) Next() bool {
 
 func (i *IterWithExc) GetEntity() int {
 	return i.entity
-}
-
-func (i *IterWithExc) unlock() {
-
 }
 
 type Inc1[I1 any] struct{}

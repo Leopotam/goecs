@@ -164,3 +164,109 @@ func TestQueryIter(t *testing.T) {
 
 	w.Destroy()
 }
+
+func TestInvalidIterNext(t *testing.T) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic.")
+		}
+		world.Destroy()
+	}(w)
+	// p := ecs.GetPool[C2](w)
+	// p.Get(0)
+	q := ecs.NewQuery[ecs.Inc1[C1]](w)
+	it := q.Iter()
+	it.Next()
+	it.Next()
+	t.Errorf("code should panic.")
+}
+
+func TestInvalidIterWithExcNext(t *testing.T) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic.")
+		}
+		world.Destroy()
+	}(w)
+	q := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
+	it := q.Iter()
+	it.Next()
+	it.Next()
+	t.Errorf("code should panic.")
+}
+
+func BenchmarkQueryWithOneEmptyInc(b *testing.B) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
+	for i := 0; i < 100000; i++ {
+		p.Add(w.NewEntity())
+	}
+	q := ecs.NewQuery[ecs.Inc1[C1]](w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for it := q.Iter(); it.Next(); {
+			_ = p.Get(it.GetEntity())
+		}
+	}
+	b.StopTimer()
+	w.Destroy()
+}
+
+func BenchmarkQueryWithOneNonEmptyInc(b *testing.B) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C2](w)
+	for i := 0; i < 100000; i++ {
+		p.Add(w.NewEntity())
+	}
+	q := ecs.NewQuery[ecs.Inc1[C2]](w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for it := q.Iter(); it.Next(); {
+			_ = p.Get(it.GetEntity())
+		}
+	}
+	b.StopTimer()
+	w.Destroy()
+}
+
+func BenchmarkQueryWithTwoInc(b *testing.B) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	for i := 0; i < 100000; i++ {
+		e := w.NewEntity()
+		p1.Add(e)
+		p2.Add(e)
+	}
+	q := ecs.NewQuery[ecs.Inc2[C1, C2]](w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for it := q.Iter(); it.Next(); {
+			_ = p1.Get(it.GetEntity())
+		}
+	}
+	b.StopTimer()
+	w.Destroy()
+}
+
+func BenchmarkQueryWithTwoIncAndOneExc(b *testing.B) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	for i := 0; i < 1000000; i++ {
+		e := w.NewEntity()
+		p1.Add(e)
+		p2.Add(e)
+	}
+	q := ecs.NewQueryWithExc[ecs.Inc2[C1, C2], ecs.Exc1[C3]](w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for it := q.Iter(); it.Next(); {
+			_ = p1.Get(it.GetEntity())
+		}
+	}
+	b.StopTimer()
+	w.Destroy()
+}

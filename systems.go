@@ -143,7 +143,7 @@ func (s *Systems) GetWorld() *World {
 	return s.defWorld
 }
 
-func (s *Systems) GetWorldByName(name string) *World {
+func (s *Systems) GetWorldWithName(name string) *World {
 	if world, ok := s.namedWorlds[name]; ok {
 		return world
 	}

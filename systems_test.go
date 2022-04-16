@@ -56,7 +56,7 @@ func (s *RunInvalidSystem1) Run(systems *ecs.Systems)                 { systems.
 func (s *DestroyInvalidSystem1) Destroy(systems *ecs.Systems)         { systems.GetWorld().NewEntity() }
 func (s *PostDestroyInvalidSystem1) PostDestroy(systems *ecs.Systems) { systems.GetWorld().NewEntity() }
 func (s *InitInvalidSystem2) Init(systems *ecs.Systems) {
-	systems.GetWorldByName("events").NewEntity()
+	systems.GetWorldWithName("events").NewEntity()
 }
 
 func TestSystemRegistration(t *testing.T) {
@@ -88,10 +88,10 @@ func TestSystemGetWorlds(t *testing.T) {
 	if s.GetWorld() != w1 {
 		t.Errorf("invalid default world.")
 	}
-	if s.GetWorldByName("events") != w2 {
+	if s.GetWorldWithName("events") != w2 {
 		t.Errorf("invalid named world.")
 	}
-	if s.GetWorldByName("events1") != nil {
+	if s.GetWorldWithName("events1") != nil {
 		t.Errorf("invalid named world.")
 	}
 	s.Destroy()
