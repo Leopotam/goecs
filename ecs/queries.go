@@ -35,6 +35,7 @@ func NewQuery[I IInc](w *World) *Query {
 	var i I
 	q.inc = i.Fill(w)
 	q.iter.q = q
+	q.iter.sparseIncs = make([][]int, len(q.inc))
 	return q
 }
 
@@ -45,25 +46,30 @@ func NewQueryWithExc[I IInc, E IExc](w *World) *QueryWithExc {
 	q.inc = i.Fill(w)
 	q.exc = e.Fill(w)
 	q.iter.q = q
+	q.iter.sparseIncs = make([][]int, len(q.inc))
+	q.iter.sparseExcs = make([][]int, len(q.exc))
 	return q
 }
 
 type Iter struct {
-	q       *Query
-	poolIdx int
-	indices []int
-	length  int
-	idx     int
-	entity  int
+	q          *Query
+	poolIdx    int
+	indices    []int
+	length     int
+	sparseIncs [][]int
+	idx        int
+	entity     int
 }
 
 type IterWithExc struct {
-	q       *QueryWithExc
-	poolIdx int
-	indices []int
-	length  int
-	idx     int
-	entity  int
+	q          *QueryWithExc
+	poolIdx    int
+	indices    []int
+	length     int
+	sparseIncs [][]int
+	sparseExcs [][]int
+	idx        int
+	entity     int
 }
 
 func (q *Query) Iter() Iter {
@@ -76,6 +82,7 @@ func (q *Query) Iter() Iter {
 				itemsCount = newMin
 				poolIdx = idx
 			}
+			q.iter.sparseIncs[idx] = pool.GetSparseIndices()
 		}
 		q.iter.poolIdx = poolIdx
 		q.iter.indices = q.inc[poolIdx].GetIndices()
@@ -101,17 +108,17 @@ func (i *Iter) Next() bool {
 			return false
 		}
 		i.entity = i.indices[i.idx]
-		if i.entity < 0 {
-			continue
-		}
-		for idx, pool := range i.q.inc {
-			if idx != i.poolIdx && !pool.Has(i.entity) {
-				i.entity = -1
-				break
-			}
-		}
 		if i.entity >= 0 {
-			return true
+			for _, sparse := range i.sparseIncs {
+				// if idx != i.poolIdx && sparse[i.entity] <= 0 {
+				if sparse[i.entity] <= 0 {
+					i.entity = -1
+					break
+				}
+			}
+			if i.entity >= 0 {
+				return true
+			}
 		}
 	}
 }
@@ -130,6 +137,10 @@ func (q *QueryWithExc) Iter() IterWithExc {
 				itemsCount = newMin
 				poolIdx = idx
 			}
+			q.iter.sparseIncs[idx] = pool.GetSparseIndices()
+		}
+		for idx, pool := range q.exc {
+			q.iter.sparseExcs[idx] = pool.GetSparseIndices()
 		}
 		q.iter.poolIdx = poolIdx
 		q.iter.indices = q.inc[poolIdx].GetIndices()
@@ -155,25 +166,25 @@ func (i *IterWithExc) Next() bool {
 			return false
 		}
 		i.entity = i.indices[i.idx]
-		if i.entity < 0 {
-			continue
-		}
-		for idx, pool := range i.q.inc {
-			if idx != i.poolIdx && !pool.Has(i.entity) {
-				i.entity = -1
-				break
-			}
-		}
 		if i.entity >= 0 {
-			for _, pool := range i.q.exc {
-				if pool.Has(i.entity) {
+			for _, sparse := range i.sparseIncs {
+				// if idx != i.poolIdx && sparse[i.entity] <= 0 {
+				if sparse[i.entity] <= 0 {
 					i.entity = -1
 					break
 				}
 			}
-		}
-		if i.entity >= 0 {
-			return true
+			if i.entity >= 0 {
+				for _, sparse := range i.sparseExcs {
+					if sparse[i.entity] > 0 {
+						i.entity = -1
+						break
+					}
+				}
+			}
+			if i.entity >= 0 {
+				return true
+			}
 		}
 	}
 }

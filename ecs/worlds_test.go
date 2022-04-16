@@ -6,7 +6,7 @@
 package ecs_test
 
 import (
-	"ecs"
+	"goecs/ecs"
 	"math"
 	"testing"
 )

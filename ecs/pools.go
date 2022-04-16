@@ -20,6 +20,7 @@ type IEcsPool interface {
 	Has(entity int) bool
 	Del(entity int)
 	GetIndices() []int
+	GetSparseIndices() []int
 	GetItemsCount() int
 }
 
@@ -129,6 +130,10 @@ func (p *Pool[T]) Del(entity int) {
 
 func (p *Pool[T]) GetIndices() []int {
 	return p.denseIndices[1:]
+}
+
+func (p *Pool[T]) GetSparseIndices() []int {
+	return p.sparseIndices
 }
 
 func (p *Pool[T]) GetItemsCount() int {

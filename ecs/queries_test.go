@@ -6,7 +6,7 @@
 package ecs_test
 
 import (
-	"ecs"
+	"goecs/ecs"
 	"testing"
 )
 
@@ -241,6 +241,52 @@ func BenchmarkQueryWithTwoInc(b *testing.B) {
 		p2.Add(e)
 	}
 	q := ecs.NewQuery[ecs.Inc2[C1, C2]](w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for it := q.Iter(); it.Next(); {
+			_ = p1.Get(it.GetEntity())
+		}
+	}
+	b.StopTimer()
+	w.Destroy()
+}
+
+func BenchmarkQueryWithTreeInc(b *testing.B) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
+	for i := 0; i < 100000; i++ {
+		e := w.NewEntity()
+		p1.Add(e)
+		p2.Add(e)
+		p3.Add(e)
+	}
+	q := ecs.NewQuery[ecs.Inc3[C1, C2, C3]](w)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for it := q.Iter(); it.Next(); {
+			_ = p1.Get(it.GetEntity())
+		}
+	}
+	b.StopTimer()
+	w.Destroy()
+}
+
+func BenchmarkQueryWithFourInc(b *testing.B) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
+	p4 := ecs.GetPool[C4](w)
+	for i := 0; i < 100000; i++ {
+		e := w.NewEntity()
+		p1.Add(e)
+		p2.Add(e)
+		p3.Add(e)
+		p4.Add(e)
+	}
+	q := ecs.NewQuery[ecs.Inc4[C1, C2, C3, C4]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {
