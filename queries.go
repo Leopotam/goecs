@@ -34,8 +34,12 @@ func NewQuery[I IInc](w *World) *Query {
 	q := &Query{}
 	var i I
 	q.inc = i.Fill(w)
-	q.iter.q = q
-	q.iter.sparseIncs = make([][]int, len(q.inc))
+	q.iter = Iter{
+		q:          q,
+		sparseIncs: make([][]int, len(q.inc)),
+		entity:     -1,
+		idx:        -1,
+	}
 	return q
 }
 
@@ -45,15 +49,18 @@ func NewQueryWithExc[I IInc, E IExc](w *World) *QueryWithExc {
 	var e E
 	q.inc = i.Fill(w)
 	q.exc = e.Fill(w)
-	q.iter.q = q
-	q.iter.sparseIncs = make([][]int, len(q.inc))
-	q.iter.sparseExcs = make([][]int, len(q.exc))
+	q.iter = IterWithExc{
+		q:          q,
+		sparseIncs: make([][]int, len(q.inc)),
+		sparseExcs: make([][]int, len(q.exc)),
+		entity:     -1,
+		idx:        -1,
+	}
 	return q
 }
 
 type Iter struct {
 	q          *Query
-	poolIdx    int
 	indices    []int
 	length     int
 	sparseIncs [][]int
@@ -63,7 +70,6 @@ type Iter struct {
 
 type IterWithExc struct {
 	q          *QueryWithExc
-	poolIdx    int
 	indices    []int
 	length     int
 	sparseIncs [][]int
@@ -84,15 +90,11 @@ func (q *Query) Iter() Iter {
 			}
 			q.iter.sparseIncs[idx] = pool.GetSparseIndices()
 		}
-		q.iter.poolIdx = poolIdx
 		q.iter.indices = q.inc[poolIdx].GetIndices()
 		q.iter.length = len(q.iter.indices)
 	}
 	q.locks++
-	iter := q.iter
-	iter.idx = -1
-	iter.entity = -1
-	return iter
+	return q.iter
 }
 
 func (i *Iter) Next() bool {
@@ -142,15 +144,11 @@ func (q *QueryWithExc) Iter() IterWithExc {
 		for idx, pool := range q.exc {
 			q.iter.sparseExcs[idx] = pool.GetSparseIndices()
 		}
-		q.iter.poolIdx = poolIdx
 		q.iter.indices = q.inc[poolIdx].GetIndices()
 		q.iter.length = len(q.iter.indices)
 	}
 	q.locks++
-	iter := q.iter
-	iter.idx = -1
-	iter.entity = -1
-	return iter
+	return q.iter
 }
 
 func (i *IterWithExc) Next() bool {
