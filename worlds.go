@@ -32,7 +32,7 @@ type entityData struct {
 type World struct {
 	config              WorldConfig
 	entities            []entityData
-	pools               map[reflect.Type]IEcsPool
+	pools               map[reflect.Type]IPool
 	entitiesRecycled    []int
 	debugLeakedEntities []int
 }
@@ -60,7 +60,7 @@ func NewWorldWithConfig(config WorldConfig) *World {
 	w := &World{}
 	w.config = config
 	w.entities = make([]entityData, 0, config.WorldEntitiesSize)
-	w.pools = make(map[reflect.Type]IEcsPool, config.WorldPoolsSize)
+	w.pools = make(map[reflect.Type]IPool, config.WorldPoolsSize)
 	w.entitiesRecycled = make([]int, 0, config.WorldEntitiesRecycledSize)
 	if DEBUG {
 		w.debugLeakedEntities = make([]int, 0, 512)
@@ -170,6 +170,6 @@ func debugCheckWorldForLeakedEntities(w *World) bool {
 	return false
 }
 
-func debugCheckEntityAlive(w *World, entity int) bool {
+func (w *World) checkEntityAlive(entity int) bool {
 	return entity >= 0 && entity < len(w.entities) && w.entities[entity].gen > 0
 }

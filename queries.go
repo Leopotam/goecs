@@ -10,24 +10,24 @@ import (
 )
 
 type Query struct {
-	inc   []IEcsPool
+	inc   []IPool
 	locks int
 	iter  Iter
 }
 
 type QueryWithExc struct {
-	inc   []IEcsPool
-	exc   []IEcsPool
+	inc   []IPool
+	exc   []IPool
 	locks int
 	iter  IterWithExc
 }
 
 type IInc interface {
-	Fill(w *World) []IEcsPool
+	Fill(w *World) []IPool
 }
 
 type IExc interface {
-	Fill(w *World) []IEcsPool
+	Fill(w *World) []IPool
 }
 
 func NewQuery[I IInc](w *World) *Query {
@@ -195,35 +195,35 @@ func (i *IterWithExc) GetEntity() int {
 
 type Inc1[I1 any] struct{}
 
-func (i Inc1[I1]) Fill(w *World) []IEcsPool {
-	return []IEcsPool{GetPool[I1](w)}
+func (i Inc1[I1]) Fill(w *World) []IPool {
+	return []IPool{GetPool[I1](w)}
 }
 
 type Inc2[I1 any, I2 any] struct{}
 
-func (i Inc2[I1, I2]) Fill(w *World) []IEcsPool {
-	return []IEcsPool{GetPool[I1](w), GetPool[I2](w)}
+func (i Inc2[I1, I2]) Fill(w *World) []IPool {
+	return []IPool{GetPool[I1](w), GetPool[I2](w)}
 }
 
 type Inc3[I1 any, I2 any, I3 any] struct{}
 
-func (i Inc3[I1, I2, I3]) Fill(w *World) []IEcsPool {
-	return []IEcsPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w)}
+func (i Inc3[I1, I2, I3]) Fill(w *World) []IPool {
+	return []IPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w)}
 }
 
 type Inc4[I1 any, I2 any, I3 any, I4 any] struct{}
 
-func (i Inc4[I1, I2, I3, I4]) Fill(w *World) []IEcsPool {
-	return []IEcsPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w), GetPool[I4](w)}
+func (i Inc4[I1, I2, I3, I4]) Fill(w *World) []IPool {
+	return []IPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w), GetPool[I4](w)}
 }
 
 type Exc1[E1 any] struct{}
 type Exc2[E1 any, E2 any] struct{}
 
-func (i Exc1[E1]) Fill(w *World) []IEcsPool {
-	return []IEcsPool{GetPool[E1](w)}
+func (i Exc1[E1]) Fill(w *World) []IPool {
+	return []IPool{GetPool[E1](w)}
 }
 
-func (i Exc2[E1, E2]) Fill(w *World) []IEcsPool {
-	return []IEcsPool{GetPool[E1](w), GetPool[E2](w)}
+func (i Exc2[E1, E2]) Fill(w *World) []IPool {
+	return []IPool{GetPool[E1](w), GetPool[E2](w)}
 }

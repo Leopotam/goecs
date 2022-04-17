@@ -25,6 +25,7 @@ go build -ldflags "-w -s" -tags "RELEASE" .
     * [Systems](#Systems)
     * [Query](#Query)
 * [Лицензия](#Лицензия)
+* [ЧаВо](#ЧаВо)
 
 # Социальные ресурсы
 [![discord](https://img.shields.io/discord/404358247621853185.svg?label=enter%20to%20discord%20server&style=for-the-badge&logo=discord)](https://discord.gg/5GZVde6)
@@ -187,3 +188,39 @@ for it := q1.Iter(); it.Next(); {
 
 В случаях лицензирования по условиям MIT-Red не стоит расчитывать на
 персональные консультации или какие-либо гарантии.
+
+# ЧаВо
+
+## Меня не устраивают значения по умолчанию для полей компонентов. Как я могу это настроить?
+
+Компоненты поддерживают кастомную настройку значений через реализацию интерфейса `IComponentReset`:
+```go
+type C1 struct{
+    ID int
+}
+
+func (c *C1) Reset() {
+    c.ID = -1
+}
+```
+Этот метод будет автоматически вызываться для всех новых компонентов, а так же для всех только что удаленных, до помещения их в пул.
+> **ВАЖНО!** В случае применения IEcsAutoReset все дополнительные очистки/проверки полей компонента отключаются, что может привести к утечкам памяти. Ответственность лежит на пользователе!
+
+## Я хочу сохранить ссылку на сущность в компоненте. Как я могу это сделать?
+
+Для сохранения ссылки на сущность ее необходимо упаковать в один из специальных контейнеров (`PackedEntity` или `PackedEntityWithWorld`):
+```go
+w := goecs.NewWorld()
+e := w.NewEntity()
+// PackedEntity - контейнер без ссылки на мир.
+packedEntity := w.PackEntity(e)
+if unpackedEntity1, ok := packedEntity.Unpack(w); ok {
+    // unpackedEntity1 - сущность жива и может быть использована.
+}
+
+// PackedEntityWithWorld - контейнер со ссылкой на мир.
+packedEntityWithWorld := w.PackEntityWithWorld(e)
+if unpackedWorld, unpackedEntity2, ok := packedEntityWithWorld.Unpack(); ok {
+    // unpackedEntity2 - сущность жива и может быть использована.
+}
+```

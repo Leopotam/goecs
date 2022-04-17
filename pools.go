@@ -10,11 +10,11 @@ import (
 	"reflect"
 )
 
-type IEcsReset interface {
+type IComponentReset interface {
 	Reset()
 }
 
-type IEcsPool interface {
+type IPool interface {
 	GetWorld() *World
 	Resize(capacity int)
 	Has(entity int) bool
@@ -57,7 +57,7 @@ func (p *Pool[T]) Add(entity int) *T {
 		denseIdx = len(p.denseIndices)
 		p.denseIndices = append(p.denseIndices, entity)
 		var defaultT T
-		if r, ok := any(&defaultT).(IEcsReset); ok {
+		if r, ok := any(&defaultT).(IComponentReset); ok {
 			r.Reset()
 		}
 		p.items = append(p.items, defaultT)
@@ -93,7 +93,7 @@ func (p *Pool[T]) Resize(capacity int) {
 
 func (p *Pool[T]) Has(entity int) bool {
 	if DEBUG {
-		if !debugCheckEntityAlive(p.world, entity) {
+		if !p.world.checkEntityAlive(entity) {
 			panic("Cant touch destroyed entity.")
 		}
 	}
@@ -102,7 +102,7 @@ func (p *Pool[T]) Has(entity int) bool {
 
 func (p *Pool[T]) Del(entity int) {
 	if DEBUG {
-		if !debugCheckEntityAlive(p.world, entity) {
+		if !p.world.checkEntityAlive(entity) {
 			panic("Cant touch destroyed entity.")
 		}
 	}
@@ -114,7 +114,7 @@ func (p *Pool[T]) Del(entity int) {
 	p.sparseIndices[entity] = 0
 	p.recycledIndices = append(p.recycledIndices, denseIdx)
 
-	if r, ok := any(&p.items[denseIdx]).(IEcsReset); ok {
+	if r, ok := any(&p.items[denseIdx]).(IComponentReset); ok {
 		r.Reset()
 	} else {
 		var defaultT T
