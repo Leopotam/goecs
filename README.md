@@ -38,7 +38,7 @@ go get -u github.com/leopotam/goecs
 ```
 go get -u github.com/leopotam/goecs@develop
 ```
-После скачивания пакет будет доступен как `"github.com/leopotam/goecs/ecs"`.
+После скачивания пакет будет доступен как `"github.com/leopotam/goecs"`.
 
 # Основные понятия
 

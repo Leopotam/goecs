@@ -3,9 +3,9 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-//go:build RELEASE
+//go:build !RELEASE
 
-package ecs
+package goecs
 
 // DEBUG mode constant.
-const DEBUG = false
+const DEBUG = true
