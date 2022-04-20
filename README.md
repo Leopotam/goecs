@@ -33,13 +33,13 @@ go build -ldflags "-w -s" -tags "RELEASE" .
 # Установка
 Поддерживается установка штатных модулем:
 ```
-go get -u github.com/leopotam/goecs
+go get -u leopotam.com/go/ecs
 ```
 По умолчанию используется последняя релизная версия. Если требуется версия "в разработке" с актуальными изменениями - следует скопировать хеш нужного коммита из ветки `develop` и подставить в командную строку. Например:
 ```
-go get -u github.com/leopotam/goecs@830f682
+go get -u leopotam.com/go/ecs@830f682
 ```
-После скачивания пакет будет доступен как `"github.com/leopotam/goecs"`.
+После скачивания пакет будет доступен как `"leopotam.com/go/ecs"`.
 
 # Основные понятия
 
@@ -210,7 +210,7 @@ func (c *C1) Reset() {
 
 Для сохранения ссылки на сущность ее необходимо упаковать в один из специальных контейнеров (`PackedEntity` или `PackedEntityWithWorld`):
 ```go
-w := goecs.NewWorld()
+w := ecs.NewWorld()
 e := w.NewEntity()
 // PackedEntity - контейнер без ссылки на мир.
 packedEntity := w.PackEntity(e)
