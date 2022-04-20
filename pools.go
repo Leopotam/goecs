@@ -3,7 +3,7 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package goecs
+package ecs // import "leopotam.com/go/ecs"
 
 import (
 	"fmt"

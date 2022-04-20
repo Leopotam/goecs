@@ -5,7 +5,7 @@
 
 //go:build RELEASE
 
-package goecs
+package ecs // import "leopotam.com/go/ecs"
 
 // DEBUG mode constant.
 const DEBUG = false
