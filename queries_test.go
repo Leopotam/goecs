@@ -3,22 +3,22 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package goecs_test
+package ecs_test
 
 import (
 	"testing"
 
-	"github.com/leopotam/goecs"
+	"leopotam.com/go/ecs"
 )
 
 func TestQueryWithOneInc(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e1 := w.NewEntity()
 	e2 := w.NewEntity()
-	p := goecs.GetPool[C1](w)
+	p := ecs.GetPool[C1](w)
 	p.Add(e1)
 	p.Add(e2)
-	q := goecs.NewQuery[goecs.Inc1[C1]](w)
+	q := ecs.NewQuery[ecs.Inc1[C1]](w)
 	i := 0
 	for it := q.Iter(); it.Next(); {
 		i++
@@ -30,14 +30,14 @@ func TestQueryWithOneInc(t *testing.T) {
 }
 
 func TestQueryWithTwoInc(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e1 := w.NewEntity()
 	e2 := w.NewEntity()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C2](w)
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
 	p1.Add(e1)
 	p2.Add(e2)
-	q := goecs.NewQuery[goecs.Inc2[C1, C2]](w)
+	q := ecs.NewQuery[ecs.Inc2[C1, C2]](w)
 	i := 0
 	for it := q.Iter(); it.Next(); {
 		i++
@@ -68,13 +68,13 @@ func TestQueryWithTwoInc(t *testing.T) {
 }
 
 func TestQueryWithOneIncOneExc(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C2](w)
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
 	p1.Add(e)
 	p2.Add(e)
-	q1 := goecs.NewQuery[goecs.Inc1[C1]](w)
+	q1 := ecs.NewQuery[ecs.Inc1[C1]](w)
 	i := 0
 	for it := q1.Iter(); it.Next(); {
 		i++
@@ -83,7 +83,7 @@ func TestQueryWithOneIncOneExc(t *testing.T) {
 		t.Errorf("invalid entities count in query.")
 	}
 
-	q2 := goecs.NewQueryWithExc[goecs.Inc1[C1], goecs.Exc1[C2]](w)
+	q2 := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	i = 0
 	for it := q2.Iter(); it.Next(); {
 		i++
@@ -95,24 +95,24 @@ func TestQueryWithOneIncOneExc(t *testing.T) {
 }
 
 func TestQueryWithLongIncAndLongExc(t *testing.T) {
-	w := goecs.NewWorld()
-	goecs.NewQuery[goecs.Inc1[C1]](w)
-	goecs.NewQuery[goecs.Inc2[C1, C2]](w)
-	goecs.NewQuery[goecs.Inc3[C1, C2, C3]](w)
-	goecs.NewQuery[goecs.Inc4[C1, C2, C3, C4]](w)
-	goecs.NewQueryWithExc[goecs.Inc1[C1], goecs.Exc1[C2]](w)
-	goecs.NewQueryWithExc[goecs.Inc1[C1], goecs.Exc2[C2, C3]](w)
+	w := ecs.NewWorld()
+	ecs.NewQuery[ecs.Inc1[C1]](w)
+	ecs.NewQuery[ecs.Inc2[C1, C2]](w)
+	ecs.NewQuery[ecs.Inc3[C1, C2, C3]](w)
+	ecs.NewQuery[ecs.Inc4[C1, C2, C3, C4]](w)
+	ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
+	ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc2[C2, C3]](w)
 	w.Destroy()
 }
 
 func TestQueryIter(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e1 := w.NewEntity()
 	e2 := w.NewEntity()
 	e3 := w.NewEntity()
-	c1Pool := goecs.GetPool[C1](w)
-	c2Pool := goecs.GetPool[C2](w)
-	c3Pool := goecs.GetPool[C3](w)
+	c1Pool := ecs.GetPool[C1](w)
+	c2Pool := ecs.GetPool[C2](w)
+	c3Pool := ecs.GetPool[C3](w)
 	c1Pool.Add(e1)
 	c1Pool.Add(e2)
 	c1Pool.Add(e3)
@@ -123,7 +123,7 @@ func TestQueryIter(t *testing.T) {
 	c3Pool.Add(w.NewEntity())
 	c3Pool.Add(w.NewEntity())
 	c3Pool.Add(w.NewEntity())
-	q1 := goecs.NewQuery[goecs.Inc1[C1]](w)
+	q1 := ecs.NewQuery[ecs.Inc1[C1]](w)
 	i := 0
 	for it := q1.Iter(); it.Next(); {
 		_ = it.GetEntity()
@@ -133,7 +133,7 @@ func TestQueryIter(t *testing.T) {
 		t.Errorf("invalid entities count: %d", i)
 	}
 
-	q2 := goecs.NewQueryWithExc[goecs.Inc1[C1], goecs.Exc1[C2]](w)
+	q2 := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	i = 0
 	for it := q2.Iter(); it.Next(); {
 		_ = it.GetEntity()
@@ -143,7 +143,7 @@ func TestQueryIter(t *testing.T) {
 		t.Errorf("invalid entities count: %d", i)
 	}
 
-	q3 := goecs.NewQueryWithExc[goecs.Inc2[C1, C2], goecs.Exc1[C4]](w)
+	q3 := ecs.NewQueryWithExc[ecs.Inc2[C1, C2], ecs.Exc1[C4]](w)
 	i = 0
 	for it := q3.Iter(); it.Next(); {
 		_ = it.GetEntity()
@@ -153,7 +153,7 @@ func TestQueryIter(t *testing.T) {
 		t.Errorf("invalid entities count: %d", i)
 	}
 
-	q4 := goecs.NewQueryWithExc[goecs.Inc2[C1, C3], goecs.Exc1[C4]](w)
+	q4 := ecs.NewQueryWithExc[ecs.Inc2[C1, C3], ecs.Exc1[C4]](w)
 	i = 0
 	for it := q4.Iter(); it.Next(); {
 		_ = it.GetEntity()
@@ -167,16 +167,16 @@ func TestQueryIter(t *testing.T) {
 }
 
 func TestInvalidIterNext(t *testing.T) {
-	w := goecs.NewWorld()
-	defer func(world *goecs.World) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
 		world.Destroy()
 	}(w)
-	// p := goecs.GetPool[C2](w)
+	// p := ecs.GetPool[C2](w)
 	// p.Get(0)
-	q := goecs.NewQuery[goecs.Inc1[C1]](w)
+	q := ecs.NewQuery[ecs.Inc1[C1]](w)
 	it := q.Iter()
 	it.Next()
 	it.Next()
@@ -184,14 +184,14 @@ func TestInvalidIterNext(t *testing.T) {
 }
 
 func TestInvalidIterWithExcNext(t *testing.T) {
-	w := goecs.NewWorld()
-	defer func(world *goecs.World) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
 		world.Destroy()
 	}(w)
-	q := goecs.NewQueryWithExc[goecs.Inc1[C1], goecs.Exc1[C2]](w)
+	q := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	it := q.Iter()
 	it.Next()
 	it.Next()
@@ -199,12 +199,12 @@ func TestInvalidIterWithExcNext(t *testing.T) {
 }
 
 func BenchmarkQueryWithOneEmptyInc(b *testing.B) {
-	w := goecs.NewWorld()
-	p := goecs.GetPool[C1](w)
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
 	for i := 0; i < 100000; i++ {
 		p.Add(w.NewEntity())
 	}
-	q := goecs.NewQuery[goecs.Inc1[C1]](w)
+	q := ecs.NewQuery[ecs.Inc1[C1]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {
@@ -216,12 +216,12 @@ func BenchmarkQueryWithOneEmptyInc(b *testing.B) {
 }
 
 func BenchmarkQueryWithOneNonEmptyInc(b *testing.B) {
-	w := goecs.NewWorld()
-	p := goecs.GetPool[C2](w)
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C2](w)
 	for i := 0; i < 100000; i++ {
 		p.Add(w.NewEntity())
 	}
-	q := goecs.NewQuery[goecs.Inc1[C2]](w)
+	q := ecs.NewQuery[ecs.Inc1[C2]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {
@@ -233,15 +233,15 @@ func BenchmarkQueryWithOneNonEmptyInc(b *testing.B) {
 }
 
 func BenchmarkQueryWithTwoInc(b *testing.B) {
-	w := goecs.NewWorld()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C2](w)
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
 	for i := 0; i < 100000; i++ {
 		e := w.NewEntity()
 		p1.Add(e)
 		p2.Add(e)
 	}
-	q := goecs.NewQuery[goecs.Inc2[C1, C2]](w)
+	q := ecs.NewQuery[ecs.Inc2[C1, C2]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {
@@ -253,17 +253,17 @@ func BenchmarkQueryWithTwoInc(b *testing.B) {
 }
 
 func BenchmarkQueryWithTreeInc(b *testing.B) {
-	w := goecs.NewWorld()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C2](w)
-	p3 := goecs.GetPool[C3](w)
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
 	for i := 0; i < 100000; i++ {
 		e := w.NewEntity()
 		p1.Add(e)
 		p2.Add(e)
 		p3.Add(e)
 	}
-	q := goecs.NewQuery[goecs.Inc3[C1, C2, C3]](w)
+	q := ecs.NewQuery[ecs.Inc3[C1, C2, C3]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {
@@ -275,11 +275,11 @@ func BenchmarkQueryWithTreeInc(b *testing.B) {
 }
 
 func BenchmarkQueryWithFourInc(b *testing.B) {
-	w := goecs.NewWorld()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C2](w)
-	p3 := goecs.GetPool[C3](w)
-	p4 := goecs.GetPool[C4](w)
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
+	p4 := ecs.GetPool[C4](w)
 	for i := 0; i < 100000; i++ {
 		e := w.NewEntity()
 		p1.Add(e)
@@ -287,7 +287,7 @@ func BenchmarkQueryWithFourInc(b *testing.B) {
 		p3.Add(e)
 		p4.Add(e)
 	}
-	q := goecs.NewQuery[goecs.Inc4[C1, C2, C3, C4]](w)
+	q := ecs.NewQuery[ecs.Inc4[C1, C2, C3, C4]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {
@@ -299,15 +299,15 @@ func BenchmarkQueryWithFourInc(b *testing.B) {
 }
 
 func BenchmarkQueryWithTwoIncAndOneExc(b *testing.B) {
-	w := goecs.NewWorld()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C2](w)
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
 	for i := 0; i < 100000; i++ {
 		e := w.NewEntity()
 		p1.Add(e)
 		p2.Add(e)
 	}
-	q := goecs.NewQueryWithExc[goecs.Inc2[C1, C2], goecs.Exc1[C3]](w)
+	q := ecs.NewQueryWithExc[ecs.Inc2[C1, C2], ecs.Exc1[C3]](w)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for it := q.Iter(); it.Next(); {

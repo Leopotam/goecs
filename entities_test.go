@@ -3,16 +3,16 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package goecs_test
+package ecs_test
 
 import (
 	"testing"
 
-	"github.com/leopotam/goecs"
+	"leopotam.com/go/ecs"
 )
 
 func TestPackedEntity(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
 	packedEntity := w.PackEntity(e)
 	if unpackedEntity, ok := packedEntity.Unpack(w); !ok || unpackedEntity != e {
@@ -26,7 +26,7 @@ func TestPackedEntity(t *testing.T) {
 }
 
 func TestPackedEntityWithWorld(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
 	packedEntity := w.PackEntityWithWorld(e)
 	if unpackedWorld, unpackedEntity, ok := packedEntity.Unpack(); !ok || unpackedWorld != w || unpackedEntity != e {

@@ -3,12 +3,12 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package goecs_test
+package ecs_test
 
 import (
 	"testing"
 
-	"github.com/leopotam/goecs"
+	"leopotam.com/go/ecs"
 )
 
 type PreInitSystem1 struct {
@@ -27,19 +27,19 @@ type PostDestroySystem1 struct {
 	Counter *int
 }
 
-func (s *PreInitSystem1) PreInit(systems *goecs.Systems) {
+func (s *PreInitSystem1) PreInit(systems *ecs.Systems) {
 	*s.Counter++
 }
-func (s *InitSystem1) Init(systems *goecs.Systems) {
+func (s *InitSystem1) Init(systems *ecs.Systems) {
 	*s.Counter++
 }
-func (s *RunSystem1) Run(systems *goecs.Systems) {
+func (s *RunSystem1) Run(systems *ecs.Systems) {
 	*s.Counter++
 }
-func (s *DestroySystem1) Destroy(systems *goecs.Systems) {
+func (s *DestroySystem1) Destroy(systems *ecs.Systems) {
 	*s.Counter++
 }
-func (s *PostDestroySystem1) PostDestroy(systems *goecs.Systems) {
+func (s *PostDestroySystem1) PostDestroy(systems *ecs.Systems) {
 	*s.Counter++
 }
 
@@ -51,20 +51,20 @@ type RunInvalidSystem1 struct{}
 type DestroyInvalidSystem1 struct{}
 type PostDestroyInvalidSystem1 struct{}
 
-func (s *PreInitInvalidSystem1) PreInit(systems *goecs.Systems) { systems.GetWorld().NewEntity() }
-func (s *InitInvalidSystem1) Init(systems *goecs.Systems)       { systems.GetWorld().NewEntity() }
-func (s *RunInvalidSystem1) Run(systems *goecs.Systems)         { systems.GetWorld().NewEntity() }
-func (s *DestroyInvalidSystem1) Destroy(systems *goecs.Systems) { systems.GetWorld().NewEntity() }
-func (s *PostDestroyInvalidSystem1) PostDestroy(systems *goecs.Systems) {
+func (s *PreInitInvalidSystem1) PreInit(systems *ecs.Systems) { systems.GetWorld().NewEntity() }
+func (s *InitInvalidSystem1) Init(systems *ecs.Systems)       { systems.GetWorld().NewEntity() }
+func (s *RunInvalidSystem1) Run(systems *ecs.Systems)         { systems.GetWorld().NewEntity() }
+func (s *DestroyInvalidSystem1) Destroy(systems *ecs.Systems) { systems.GetWorld().NewEntity() }
+func (s *PostDestroyInvalidSystem1) PostDestroy(systems *ecs.Systems) {
 	systems.GetWorld().NewEntity()
 }
-func (s *InitInvalidSystem2) Init(systems *goecs.Systems) {
+func (s *InitInvalidSystem2) Init(systems *ecs.Systems) {
 	systems.GetWorldWithName("events").NewEntity()
 }
 
 func TestSystemRegistration(t *testing.T) {
-	w := goecs.NewWorld()
-	s := goecs.NewSystems(w)
+	w := ecs.NewWorld()
+	s := ecs.NewSystems(w)
 	counter := 0
 	s.
 		Add(&PreInitSystem1{Counter: &counter}).
@@ -82,9 +82,9 @@ func TestSystemRegistration(t *testing.T) {
 }
 
 func TestSystemGetWorlds(t *testing.T) {
-	w1 := goecs.NewWorld()
-	w2 := goecs.NewWorld()
-	s := goecs.NewSystems(w1)
+	w1 := ecs.NewWorld()
+	w2 := ecs.NewWorld()
+	s := ecs.NewSystems(w1)
 	s.
 		AddWorld(w2, "events").
 		Init()
@@ -103,9 +103,9 @@ func TestSystemGetWorlds(t *testing.T) {
 }
 
 func TestSystemsInvalidType(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -117,9 +117,9 @@ func TestSystemsInvalidType(t *testing.T) {
 }
 
 func TestSystemsLeakedPreInit(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -132,9 +132,9 @@ func TestSystemsLeakedPreInit(t *testing.T) {
 }
 
 func TestSystemsLeakedInit(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -147,10 +147,10 @@ func TestSystemsLeakedInit(t *testing.T) {
 }
 
 func TestSystemsLeakedAtNamedWorldInit(t *testing.T) {
-	w := goecs.NewWorld()
-	w1 := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	w1 := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -165,9 +165,9 @@ func TestSystemsLeakedAtNamedWorldInit(t *testing.T) {
 }
 
 func TestSystemsLeakedRun(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -181,9 +181,9 @@ func TestSystemsLeakedRun(t *testing.T) {
 }
 
 func TestSystemsLeakedDestroy(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -196,9 +196,9 @@ func TestSystemsLeakedDestroy(t *testing.T) {
 }
 
 func TestSystemsLeakedPostDestroy(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -211,9 +211,9 @@ func TestSystemsLeakedPostDestroy(t *testing.T) {
 }
 
 func TestSystemsAddWorldTwice(t *testing.T) {
-	w := goecs.NewWorld()
-	systems := goecs.NewSystems(w)
-	defer func(world *goecs.World, systems *goecs.Systems) {
+	w := ecs.NewWorld()
+	systems := ecs.NewSystems(w)
+	defer func(world *ecs.World, systems *ecs.Systems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}

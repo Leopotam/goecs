@@ -3,13 +3,13 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package goecs_test
+package ecs_test
 
 import (
 	"math"
 	"testing"
 
-	"github.com/leopotam/goecs"
+	"leopotam.com/go/ecs"
 )
 
 type C1 struct{}
@@ -23,13 +23,13 @@ func (c2 *C2) Reset() {
 }
 
 func TestWorldCreate(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	w.Destroy()
 }
 
 func TestWorldResize(t *testing.T) {
-	w := goecs.NewWorldWithConfig(goecs.WorldConfig{WorldEntitiesSize: 2})
-	_ = goecs.GetPool[C1](w)
+	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 2})
+	_ = ecs.GetPool[C1](w)
 	entities := make([]int, 0, 4)
 	for i := 0; i < 3; i++ {
 		entities = append(entities, w.NewEntity())
@@ -41,8 +41,8 @@ func TestWorldResize(t *testing.T) {
 }
 
 func TestWorldEmptyEntity(t *testing.T) {
-	w := goecs.NewWorld()
-	defer func(world *goecs.World) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -54,8 +54,8 @@ func TestWorldEmptyEntity(t *testing.T) {
 }
 
 func TestWorldDelInvalidEntity(t *testing.T) {
-	w := goecs.NewWorldWithConfig(goecs.WorldConfig{WorldEntitiesSize: 2})
-	defer func(world *goecs.World) {
+	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 2})
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -66,7 +66,7 @@ func TestWorldDelInvalidEntity(t *testing.T) {
 }
 
 func TestWorldDelEntityTwice(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
 	w.DelEntity(e)
 	w.DelEntity(e)
@@ -74,7 +74,7 @@ func TestWorldDelEntityTwice(t *testing.T) {
 }
 
 func TestWorldGenEntityOverflow(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	for i := 0; i < math.MaxInt16; i++ {
 		e := w.NewEntity()
 		w.DelEntity(e)

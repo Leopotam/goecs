@@ -3,17 +3,17 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package goecs_test
+package ecs_test
 
 import (
 	"testing"
 
-	"github.com/leopotam/goecs"
+	"leopotam.com/go/ecs"
 )
 
 func TestEntityWithComponent(t *testing.T) {
-	w := goecs.NewWorld()
-	p := goecs.GetPool[C1](w)
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
 	e := w.NewEntity()
 	if e != 0 && w.GetEntityGen(e) != 1 {
 		t.Errorf("invalid entity id/gen")
@@ -23,9 +23,9 @@ func TestEntityWithComponent(t *testing.T) {
 }
 
 func TestSamePools(t *testing.T) {
-	w := goecs.NewWorld()
-	p1 := goecs.GetPool[C1](w)
-	p2 := goecs.GetPool[C1](w)
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C1](w)
 	if p1 != p2 {
 		t.Errorf("pools are not equal.")
 	}
@@ -33,7 +33,7 @@ func TestSamePools(t *testing.T) {
 }
 
 func TestReuseEntityID(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
 	id1 := e
 	gen1 := w.GetEntityGen(e)
@@ -49,9 +49,9 @@ func TestReuseEntityID(t *testing.T) {
 }
 
 func TestComponentAutoReset(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
-	p := goecs.GetPool[C2](w)
+	p := ecs.GetPool[C2](w)
 	p.Add(e)
 	c2 := p.Get(e)
 	if c2.ID != -1 {
@@ -69,22 +69,22 @@ func TestComponentAutoReset(t *testing.T) {
 }
 
 func TestGetAdditionalInfo(t *testing.T) {
-	w := goecs.NewWorld()
-	p := goecs.GetPool[C1](w)
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
 	if w != p.GetWorld() {
 		t.Errorf("invalid world in pool.")
 	}
 }
 
 func TestInvalidAdd(t *testing.T) {
-	w := goecs.NewWorld()
-	defer func(world *goecs.World) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
 		world.Destroy()
 	}(w)
-	p := goecs.GetPool[C1](w)
+	p := ecs.GetPool[C1](w)
 	e := w.NewEntity()
 	p.Add(e)
 	p.Add(e)
@@ -92,49 +92,49 @@ func TestInvalidAdd(t *testing.T) {
 }
 
 func TestInvalidGet1(t *testing.T) {
-	w := goecs.NewWorld()
-	defer func(world *goecs.World) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
 		world.Destroy()
 	}(w)
-	p := goecs.GetPool[C2](w)
+	p := ecs.GetPool[C2](w)
 	p.Get(0)
 	t.Errorf("code should panic.")
 }
 
 func TestInvalidGet2(t *testing.T) {
-	w := goecs.NewWorld()
+	w := ecs.NewWorld()
 	e := w.NewEntity()
-	defer func(world *goecs.World, entity int) {
+	defer func(world *ecs.World, entity int) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
 		world.DelEntity(entity)
 		world.Destroy()
 	}(w, e)
-	p := goecs.GetPool[C2](w)
+	p := ecs.GetPool[C2](w)
 	p.Get(e)
 	t.Errorf("code should panic.")
 }
 
 func TestInvalidDel1(t *testing.T) {
-	w := goecs.NewWorld()
-	defer func(world *goecs.World) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
 		world.Destroy()
 	}(w)
-	p := goecs.GetPool[C2](w)
+	p := ecs.GetPool[C2](w)
 	p.Del(0)
 	t.Errorf("code should panic.")
 }
 
 func TestInvalidDel2(t *testing.T) {
-	w := goecs.NewWorld()
-	p := goecs.GetPool[C1](w)
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
 	e := w.NewEntity()
 	p.Del(e)
 	w.DelEntity(e)
