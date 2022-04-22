@@ -3,10 +3,9 @@
 // Copyright (c) 2012-2022 Leopotam <leopotam@yandex.ru>
 // ----------------------------------------------------------------------------
 
-package ecs
+package ecs // import "leopotam.com/go/ecs"
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 )
@@ -31,10 +30,11 @@ type entityData struct {
 }
 
 type World struct {
-	config           WorldConfig
-	entities         []entityData
-	pools            map[reflect.Type]IEcsPool
-	entitiesRecycled []int
+	config              WorldConfig
+	entities            []entityData
+	pools               map[reflect.Type]IPool
+	entitiesRecycled    []int
+	debugLeakedEntities []int
 }
 
 func NewWorld() *World {
@@ -60,13 +60,20 @@ func NewWorldWithConfig(config WorldConfig) *World {
 	w := &World{}
 	w.config = config
 	w.entities = make([]entityData, 0, config.WorldEntitiesSize)
-	w.pools = make(map[reflect.Type]IEcsPool, config.WorldPoolsSize)
+	w.pools = make(map[reflect.Type]IPool, config.WorldPoolsSize)
 	w.entitiesRecycled = make([]int, 0, config.WorldEntitiesRecycledSize)
+	if DEBUG {
+		w.debugLeakedEntities = make([]int, 0, 512)
+	}
 	return w
 }
 
 func (w *World) Destroy() {
-	// TODO: check for leaked entities.
+	if DEBUG {
+		if debugCheckWorldForLeakedEntities(w) {
+			panic("Empty entity detected before EcsWorld.Destroy().")
+		}
+	}
 	for i := 0; i < len(w.entities); i++ {
 		if w.entities[i].ComponentsCount > 0 {
 			w.DelEntity(i)
@@ -100,14 +107,16 @@ func (w *World) NewEntity() int {
 			}
 		}
 	}
-	// TODO: add entity to leaked entities list for checking.
+	if DEBUG {
+		w.debugLeakedEntities = append(w.debugLeakedEntities, entity)
+	}
 	return entity
 }
 
 func (w *World) DelEntity(entity int) {
 	if DEBUG {
 		if entity < 0 || entity >= len(w.entities) {
-			panic("Cant touch destroyed entity.")
+			panic("Cant touch invalid entity.")
 		}
 	}
 	entityData := &w.entities[entity]
@@ -120,16 +129,10 @@ func (w *World) DelEntity(entity int) {
 			if pool.Has(entity) {
 				pool.Del(entity)
 				if entityData.ComponentsCount == 0 {
-					break
+					return
 				}
 			}
 		}
-		if DEBUG {
-			if entityData.ComponentsCount != 0 {
-				panic(fmt.Sprintf("Invalid components count on entity %d => %d.", entity, entityData.ComponentsCount))
-			}
-		}
-		return
 	}
 	if entityData.gen == math.MaxInt16 {
 		entityData.gen = -1
@@ -151,4 +154,22 @@ func GetPool[T any](w *World) *Pool[T] {
 	pool := newPool[T](w, w.config.PoolDenseSize, cap(w.entities), w.config.PoolRecycledSize)
 	w.pools[itemType] = pool
 	return pool
+}
+
+func debugCheckWorldForLeakedEntities(w *World) bool {
+	if len(w.debugLeakedEntities) > 0 {
+		for _, leakedEntity := range w.debugLeakedEntities {
+			entityData := w.entities[leakedEntity]
+			if entityData.gen > 0 && entityData.ComponentsCount == 0 {
+				w.debugLeakedEntities = w.debugLeakedEntities[:0]
+				return true
+			}
+		}
+		w.debugLeakedEntities = w.debugLeakedEntities[:0]
+	}
+	return false
+}
+
+func (w *World) checkEntityAlive(entity int) bool {
+	return entity >= 0 && entity < len(w.entities) && w.entities[entity].gen > 0
 }
