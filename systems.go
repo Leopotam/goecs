@@ -150,6 +150,10 @@ func (s *Systems) GetWorldWithName(name string) *World {
 	return nil
 }
 
+func (s *Systems) GetAllSystems() []any {
+	return s.all
+}
+
 func debugCheckSystemsForLeakedEntities(s *Systems) string {
 	if DEBUG {
 		if debugCheckWorldForLeakedEntities(s.defWorld) {
