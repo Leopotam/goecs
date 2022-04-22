@@ -24,6 +24,7 @@ go build -ldflags "-w -s" -tags "RELEASE" .
     * [Pool](#Pool)
     * [Systems](#Systems)
     * [Query](#Query)
+* [Расширения](#Расширения)
 * [Лицензия](#Лицензия)
 * [ЧаВо](#ЧаВо)
 
@@ -31,7 +32,7 @@ go build -ldflags "-w -s" -tags "RELEASE" .
 [![discord](https://img.shields.io/discord/404358247621853185.svg?label=enter%20to%20discord%20server&style=for-the-badge&logo=discord)](https://discord.gg/5GZVde6)
 
 # Установка
-Поддерживается установка штатных модулем:
+Поддерживается установка штатным модулем:
 ```
 go get -u leopotam.com/go/ecs
 ```
@@ -182,6 +183,10 @@ for it := q1.Iter(); it.Next(); {
     // Дальнейшая работа с сущностью.
 }
 ```
+
+# Расширения
+
+* [Инъекция зависимостей](https://github.com/leopotam/goecs-di)
 
 # Лицензия
 Фреймворк выпускается под двумя лицензиями, [подробности тут](./LICENSE.md).
