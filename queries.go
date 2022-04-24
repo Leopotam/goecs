@@ -23,6 +23,7 @@ type QueryWithExc struct {
 }
 
 type IInc interface {
+	CopyWithPools(w *World) IInc
 	Fill(w *World) []IPool
 }
 
@@ -201,25 +202,69 @@ func (i *IterWithExc) GetEntity() int {
 	return i.entity
 }
 
-type Inc1[I1 any] struct{}
+type Inc1[I1 any] struct {
+	Inc1 *Pool[I1]
+}
+
+func (i Inc1[I1]) CopyWithPools(w *World) IInc {
+	return &Inc1[I1]{
+		Inc1: GetPool[I1](w),
+	}
+}
 
 func (i Inc1[I1]) Fill(w *World) []IPool {
 	return []IPool{GetPool[I1](w)}
 }
 
-type Inc2[I1 any, I2 any] struct{}
+type Inc2[I1 any, I2 any] struct {
+	Inc1 *Pool[I1]
+	Inc2 *Pool[I2]
+}
+
+func (i Inc2[I1, I2]) CopyWithPools(w *World) IInc {
+	return &Inc2[I1, I2]{
+		Inc1: GetPool[I1](w),
+		Inc2: GetPool[I2](w),
+	}
+}
 
 func (i Inc2[I1, I2]) Fill(w *World) []IPool {
 	return []IPool{GetPool[I1](w), GetPool[I2](w)}
 }
 
-type Inc3[I1 any, I2 any, I3 any] struct{}
+type Inc3[I1 any, I2 any, I3 any] struct {
+	Inc1 *Pool[I1]
+	Inc2 *Pool[I2]
+	Inc3 *Pool[I3]
+}
+
+func (i Inc3[I1, I2, I3]) CopyWithPools(w *World) IInc {
+	return &Inc3[I1, I2, I3]{
+		Inc1: GetPool[I1](w),
+		Inc2: GetPool[I2](w),
+		Inc3: GetPool[I3](w),
+	}
+}
 
 func (i Inc3[I1, I2, I3]) Fill(w *World) []IPool {
 	return []IPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w)}
 }
 
-type Inc4[I1 any, I2 any, I3 any, I4 any] struct{}
+type Inc4[I1 any, I2 any, I3 any, I4 any] struct {
+	Inc1 *Pool[I1]
+	Inc2 *Pool[I2]
+	Inc3 *Pool[I3]
+	Inc4 *Pool[I4]
+}
+
+func (i Inc4[I1, I2, I3, I4]) CopyWithPools(w *World) IInc {
+	return &Inc4[I1, I2, I3, I4]{
+		Inc1: GetPool[I1](w),
+		Inc2: GetPool[I2](w),
+		Inc3: GetPool[I3](w),
+		Inc4: GetPool[I4](w),
+	}
+}
 
 func (i Inc4[I1, I2, I3, I4]) Fill(w *World) []IPool {
 	return []IPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w), GetPool[I4](w)}

@@ -76,19 +76,19 @@ type DestroySystem1 struct {}
 type PostDestroySystem1 struct {}
 
 func (s *PreInitSystem1) PreInit(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Init() и до срабатывания IInitSystem.Init().
+    // Будет вызван один раз в момент работы Systems.Init() и до срабатывания IInitSystem.Init().
 }
 func (s *InitSystem1) Init(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Init() и после срабатывания IPreInitSystem.PreInit().
+    // Будет вызван один раз в момент работы Systems.Init() и после срабатывания IPreInitSystem.PreInit().
 }
 func (s *RunSystem1) Run(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Run().
+    // Будет вызван один раз в момент работы Systems.Run().
 }
 func (s *DestroySystem1) Destroy(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Destroy() и до срабатывания IPostDestroySystem.PostDestroy().
+    // Будет вызван один раз в момент работы Systems.Destroy() и до срабатывания IPostDestroySystem.PostDestroy().
 }
 func (s *PostDestroySystem1) PostDestroy(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Destroy() и после срабатывания IDestroySystem.Destroy().
+    // Будет вызван один раз в момент работы Systems.Destroy() и после срабатывания IDestroySystem.Destroy().
 }
 ```
 
