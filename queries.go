@@ -24,7 +24,7 @@ type QueryWithExc struct {
 
 type IInc interface {
 	CopyWithPools(w *World) IInc
-	Fill(w *World) []IPool
+	GetPools(w *World) []IPool
 }
 
 type IExc interface {
@@ -34,7 +34,7 @@ type IExc interface {
 func NewQuery[I IInc](w *World) *Query {
 	q := &Query{}
 	var i I
-	q.inc = i.Fill(w)
+	q.inc = i.GetPools(w)
 	incsLen := len(q.inc)
 	q.iter = Iter{
 		q:            q,
@@ -50,7 +50,7 @@ func NewQueryWithExc[I IInc, E IExc](w *World) *QueryWithExc {
 	q := &QueryWithExc{}
 	var i I
 	var e E
-	q.inc = i.Fill(w)
+	q.inc = i.GetPools(w)
 	q.exc = e.Fill(w)
 	incsLen := len(q.inc)
 	q.iter = IterWithExc{
@@ -212,7 +212,7 @@ func (i Inc1[I1]) CopyWithPools(w *World) IInc {
 	}
 }
 
-func (i Inc1[I1]) Fill(w *World) []IPool {
+func (i Inc1[I1]) GetPools(w *World) []IPool {
 	return []IPool{GetPool[I1](w)}
 }
 
@@ -228,7 +228,7 @@ func (i Inc2[I1, I2]) CopyWithPools(w *World) IInc {
 	}
 }
 
-func (i Inc2[I1, I2]) Fill(w *World) []IPool {
+func (i Inc2[I1, I2]) GetPools(w *World) []IPool {
 	return []IPool{GetPool[I1](w), GetPool[I2](w)}
 }
 
@@ -246,7 +246,7 @@ func (i Inc3[I1, I2, I3]) CopyWithPools(w *World) IInc {
 	}
 }
 
-func (i Inc3[I1, I2, I3]) Fill(w *World) []IPool {
+func (i Inc3[I1, I2, I3]) GetPools(w *World) []IPool {
 	return []IPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w)}
 }
 
@@ -266,7 +266,7 @@ func (i Inc4[I1, I2, I3, I4]) CopyWithPools(w *World) IInc {
 	}
 }
 
-func (i Inc4[I1, I2, I3, I4]) Fill(w *World) []IPool {
+func (i Inc4[I1, I2, I3, I4]) GetPools(w *World) []IPool {
 	return []IPool{GetPool[I1](w), GetPool[I2](w), GetPool[I3](w), GetPool[I4](w)}
 }
 
