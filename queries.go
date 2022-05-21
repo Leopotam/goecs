@@ -10,12 +10,14 @@ import (
 )
 
 type Query struct {
+	world *World
 	inc   []IPool
 	locks int
 	iter  Iter
 }
 
 type QueryWithExc struct {
+	world *World
 	inc   []IPool
 	exc   []IPool
 	locks int
@@ -32,7 +34,7 @@ type IExc interface {
 }
 
 func NewQuery[I IInc](w *World) *Query {
-	q := &Query{}
+	q := &Query{world: w}
 	var i I
 	q.inc = i.GetPools(w)
 	incsLen := len(q.inc)
@@ -47,7 +49,7 @@ func NewQuery[I IInc](w *World) *Query {
 }
 
 func NewQueryWithExc[I IInc, E IExc](w *World) *QueryWithExc {
-	q := &QueryWithExc{}
+	q := &QueryWithExc{world: w}
 	var i I
 	var e E
 	q.inc = i.GetPools(w)
@@ -83,6 +85,10 @@ type IterWithExc struct {
 	otherIncsLen int
 	idx          int
 	entity       int
+}
+
+func (q *Query) GetWorld() *World {
+	return q.world
 }
 
 func (q *Query) Iter() Iter {
@@ -136,6 +142,10 @@ func (i *Iter) Next() bool {
 
 func (i *Iter) GetEntity() int {
 	return i.entity
+}
+
+func (q *QueryWithExc) GetWorld() *World {
+	return q.world
 }
 
 func (q *QueryWithExc) Iter() IterWithExc {

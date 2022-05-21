@@ -11,6 +11,16 @@ import (
 	"leopotam.com/go/ecs"
 )
 
+func TestQueryGetWorld(t *testing.T) {
+	w := ecs.NewWorld()
+	q1 := ecs.NewQuery[ecs.Inc1[C1]](w)
+	q2 := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
+	if q1.GetWorld() != w || q2.GetWorld() != w {
+		t.Errorf("invalid world")
+	}
+	w.Destroy()
+}
+
 func TestQueryWithOneInc(t *testing.T) {
 	w := ecs.NewWorld()
 	e1 := w.NewEntity()
