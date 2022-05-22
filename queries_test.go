@@ -11,6 +11,16 @@ import (
 	"leopotam.com/go/ecs"
 )
 
+func TestQueryGetWorld(t *testing.T) {
+	w := ecs.NewWorld()
+	q1 := ecs.NewQuery[ecs.Inc1[C1]](w)
+	q2 := ecs.NewQueryWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
+	if q1.GetWorld() != w || q2.GetWorld() != w {
+		t.Errorf("invalid world")
+	}
+	w.Destroy()
+}
+
 func TestQueryWithOneInc(t *testing.T) {
 	w := ecs.NewWorld()
 	e1 := w.NewEntity()
@@ -196,6 +206,56 @@ func TestInvalidIterWithExcNext(t *testing.T) {
 	it.Next()
 	it.Next()
 	t.Errorf("code should panic.")
+}
+
+func TestQueryInc1Copy(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
+	var inc ecs.Inc1[C1]
+	inc = *inc.CopyWithPools(w).(*ecs.Inc1[C1])
+	if inc.Inc1 != p {
+		t.Errorf("constraint builtin pool not invalid.")
+	}
+	w.Destroy()
+}
+
+func TestQueryInc2Copy(t *testing.T) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	var inc ecs.Inc2[C1, C2]
+	inc = *inc.CopyWithPools(w).(*ecs.Inc2[C1, C2])
+	if inc.Inc1 != p1 || inc.Inc2 != p2 {
+		t.Errorf("constraint builtin pool not invalid.")
+	}
+	w.Destroy()
+}
+
+func TestQueryInc3Copy(t *testing.T) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
+	var inc ecs.Inc3[C1, C2, C3]
+	inc = *inc.CopyWithPools(w).(*ecs.Inc3[C1, C2, C3])
+	if inc.Inc1 != p1 || inc.Inc2 != p2 || inc.Inc3 != p3 {
+		t.Errorf("constraint builtin pool not invalid.")
+	}
+	w.Destroy()
+}
+
+func TestQueryInc4Copy(t *testing.T) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
+	p4 := ecs.GetPool[C4](w)
+	var inc ecs.Inc4[C1, C2, C3, C4]
+	inc = *inc.CopyWithPools(w).(*ecs.Inc4[C1, C2, C3, C4])
+	if inc.Inc1 != p1 || inc.Inc2 != p2 || inc.Inc3 != p3 || inc.Inc4 != p4 {
+		t.Errorf("constraint builtin pool not invalid.")
+	}
+	w.Destroy()
 }
 
 func BenchmarkQueryWithOneEmptyInc(b *testing.B) {

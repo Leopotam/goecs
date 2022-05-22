@@ -102,6 +102,29 @@ func TestSystemGetWorlds(t *testing.T) {
 	w2.Destroy()
 }
 
+func TestSystemGetAllSystems(t *testing.T) {
+	w := ecs.NewWorld()
+	counter := 0
+	sList := []any{
+		&PreInitSystem1{Counter: &counter},
+		&InitSystem1{Counter: &counter},
+		&RunSystem1{Counter: &counter},
+		&DestroySystem1{Counter: &counter},
+		&PostDestroySystem1{Counter: &counter},
+	}
+	s := ecs.NewSystems(w)
+	for _, ss := range sList {
+		s.Add(ss)
+	}
+	s.Init()
+	allSystems := s.GetAllSystems()
+	if len(allSystems) != len(sList) {
+		t.Errorf("invalid systems amount.")
+	}
+	s.Destroy()
+	w.Destroy()
+}
+
 func TestSystemsInvalidType(t *testing.T) {
 	w := ecs.NewWorld()
 	systems := ecs.NewSystems(w)

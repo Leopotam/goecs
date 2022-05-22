@@ -24,6 +24,7 @@ go build -ldflags "-w -s" -tags "RELEASE" .
     * [Pool](#Pool)
     * [Systems](#Systems)
     * [Query](#Query)
+* [Расширения](#Расширения)
 * [Лицензия](#Лицензия)
 * [ЧаВо](#ЧаВо)
 
@@ -31,7 +32,7 @@ go build -ldflags "-w -s" -tags "RELEASE" .
 [![discord](https://img.shields.io/discord/404358247621853185.svg?label=enter%20to%20discord%20server&style=for-the-badge&logo=discord)](https://discord.gg/5GZVde6)
 
 # Установка
-Поддерживается установка штатных модулем:
+Поддерживается установка штатным модулем:
 ```
 go get -u leopotam.com/go/ecs
 ```
@@ -49,7 +50,7 @@ go get -u leopotam.com/go/ecs@830f682
 // Создаем новую сущность в мире.
 entity := world.NewEntity()
 
-// Любая сущность может быть удалена, при этом сначала все компоненты будут автоматически удалены и только потом энтити будет считаться уничтоженной. 
+// Любая сущность может быть удалена, при этом сначала все компоненты будут автоматически удалены и только потом сущность будет считаться уничтоженной. 
 world.DelEntity(entity)
 ```
 
@@ -75,19 +76,19 @@ type DestroySystem1 struct {}
 type PostDestroySystem1 struct {}
 
 func (s *PreInitSystem1) PreInit(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Init() и до срабатывания IInitSystem.Init().
+    // Будет вызван один раз в момент работы Systems.Init() и до срабатывания IInitSystem.Init().
 }
 func (s *InitSystem1) Init(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Init() и после срабатывания IPreInitSystem.PreInit().
+    // Будет вызван один раз в момент работы Systems.Init() и после срабатывания IPreInitSystem.PreInit().
 }
 func (s *RunSystem1) Run(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Run().
+    // Будет вызван один раз в момент работы Systems.Run().
 }
 func (s *DestroySystem1) Destroy(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Destroy() и до срабатывания IPostDestroySystem.PostDestroy().
+    // Будет вызван один раз в момент работы Systems.Destroy() и до срабатывания IPostDestroySystem.PostDestroy().
 }
 func (s *PostDestroySystem1) PostDestroy(systems *ecs.Systems) {
-	// Будет вызван один раз в момент работы Systems.Destroy() и после срабатывания IDestroySystem.Destroy().
+    // Будет вызван один раз в момент работы Systems.Destroy() и после срабатывания IDestroySystem.Destroy().
 }
 ```
 
@@ -182,6 +183,10 @@ for it := q1.Iter(); it.Next(); {
     // Дальнейшая работа с сущностью.
 }
 ```
+
+# Расширения
+
+* [Инъекция зависимостей](https://github.com/leopotam/goecs-di)
 
 # Лицензия
 Фреймворк выпускается под двумя лицензиями, [подробности тут](./LICENSE.md).
