@@ -11,6 +11,18 @@ import (
 	"leopotam.com/go/ecs"
 )
 
+func TestPoolApi(t *testing.T) {
+	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 1234})
+	p := ecs.GetPool[C1](w)
+	if p.GetWorld() != w {
+		t.Errorf("invalid world")
+	}
+	if len(p.GetSparseIndices()) != 1234 {
+		t.Errorf("invalid sparse indices")
+	}
+	w.Destroy()
+}
+
 func TestEntityWithComponent(t *testing.T) {
 	w := ecs.NewWorld()
 	p := ecs.GetPool[C1](w)

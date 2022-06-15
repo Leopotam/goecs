@@ -15,47 +15,51 @@ type IComponentReset interface {
 }
 
 type IPool interface {
+	GetID() int
 	GetWorld() *World
 	Resize(capacity int)
 	Has(entity int) bool
 	Del(entity int)
-	GetIndices() []int
 	GetSparseIndices() []int
-	GetItemsCount() int
+	GetRaw(entity int) any
+	GetItemType() reflect.Type
 }
 
 type Pool[T any] struct {
+	id              int
 	world           *World
+	itemType        reflect.Type
 	items           []T
-	itemsCount      int
-	denseIndices    []int
 	sparseIndices   []int
 	recycledIndices []int
 }
 
-func newPool[T any](world *World, denseCapacity int, sparseCapacity int, recycledCapacity int) *Pool[T] {
+func newPool[T any](world *World, id int, denseCapacity int, sparseCapacity int, recycledCapacity int) *Pool[T] {
 	p := &Pool[T]{}
+	p.id = id
 	p.world = world
+	p.itemType = reflect.TypeOf(p.items).Elem()
 	p.items = make([]T, 1, denseCapacity+1)
-	p.itemsCount = 0
-	p.denseIndices = make([]int, 1, denseCapacity+1)
 	p.sparseIndices = make([]int, sparseCapacity)
 	p.recycledIndices = make([]int, 0, denseCapacity+1)
 	return p
 }
 
+func (p *Pool[T]) GetID() int {
+	return p.id
+}
+
 func (p *Pool[T]) Add(entity int) *T {
 	if DEBUG {
 		if p.Has(entity) {
-			panic(fmt.Sprintf("Component \"%s\" already attached to entity.", reflect.TypeOf(p.items).Elem().String()))
+			panic(fmt.Sprintf("component \"%s\" already attached to entity", reflect.TypeOf(p.items).Elem().String()))
 		}
 	}
 	l := len(p.recycledIndices)
 	isNew := l == 0
 	var denseIdx int
 	if isNew {
-		denseIdx = len(p.denseIndices)
-		p.denseIndices = append(p.denseIndices, entity)
+		denseIdx = len(p.items)
 		var defaultT T
 		if r, ok := any(&defaultT).(IComponentReset); ok {
 			r.Reset()
@@ -64,18 +68,22 @@ func (p *Pool[T]) Add(entity int) *T {
 	} else {
 		denseIdx = p.recycledIndices[l-1]
 		p.recycledIndices = p.recycledIndices[:l-1]
-		p.denseIndices[denseIdx] = entity
 	}
 	p.sparseIndices[entity] = denseIdx
-	p.itemsCount++
 	p.world.entities[entity].ComponentsCount++
+	p.world.onEntityChange(entity, p.id, true)
+	if DEBUG {
+		for _, l := range p.world.debugEventListeners {
+			l.OnEntityChanged(entity)
+		}
+	}
 	return &p.items[denseIdx]
 }
 
 func (p *Pool[T]) Get(entity int) *T {
 	if DEBUG {
 		if !p.Has(entity) {
-			panic(fmt.Sprintf("Component \"%s\" not attached to entity.", reflect.TypeOf(p.items).Elem().String()))
+			panic(fmt.Sprintf("component \"%s\" not attached to entity", reflect.TypeOf(p.items).Elem().String()))
 		}
 	}
 	return &p.items[p.sparseIndices[entity]]
@@ -94,7 +102,7 @@ func (p *Pool[T]) Resize(capacity int) {
 func (p *Pool[T]) Has(entity int) bool {
 	if DEBUG {
 		if !p.world.checkEntityAlive(entity) {
-			panic("Cant touch destroyed entity.")
+			panic("cant touch destroyed entity")
 		}
 	}
 	return p.sparseIndices[entity] > 0
@@ -103,14 +111,14 @@ func (p *Pool[T]) Has(entity int) bool {
 func (p *Pool[T]) Del(entity int) {
 	if DEBUG {
 		if !p.world.checkEntityAlive(entity) {
-			panic("Cant touch destroyed entity.")
+			panic("cant touch destroyed entity")
 		}
 	}
 	if p.sparseIndices[entity] <= 0 {
 		return
 	}
+	p.world.onEntityChange(entity, p.id, false)
 	denseIdx := p.sparseIndices[entity]
-	p.denseIndices[denseIdx] = -1
 	p.sparseIndices[entity] = 0
 	p.recycledIndices = append(p.recycledIndices, denseIdx)
 
@@ -120,22 +128,26 @@ func (p *Pool[T]) Del(entity int) {
 		var defaultT T
 		p.items[denseIdx] = defaultT
 	}
-	p.itemsCount--
 	entityData := &p.world.entities[entity]
 	entityData.ComponentsCount--
+	if DEBUG {
+		for _, l := range p.world.debugEventListeners {
+			l.OnEntityChanged(entity)
+		}
+	}
 	if entityData.ComponentsCount == 0 {
 		p.world.DelEntity(entity)
 	}
-}
-
-func (p *Pool[T]) GetIndices() []int {
-	return p.denseIndices[1:]
 }
 
 func (p *Pool[T]) GetSparseIndices() []int {
 	return p.sparseIndices
 }
 
-func (p *Pool[T]) GetItemsCount() int {
-	return p.itemsCount
+func (p *Pool[T]) GetRaw(entity int) any {
+	return p.Get(entity)
+}
+
+func (p *Pool[T]) GetItemType() reflect.Type {
+	return p.itemType
 }

@@ -7,6 +7,7 @@ package ecs_test
 
 import (
 	"math"
+	"reflect"
 	"testing"
 
 	"leopotam.com/go/ecs"
@@ -29,14 +30,16 @@ func TestWorldCreate(t *testing.T) {
 
 func TestWorldResize(t *testing.T) {
 	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 2})
-	_ = ecs.GetPool[C1](w)
-	entities := make([]int, 0, 4)
+	p := ecs.GetPool[C1](w)
+	_ = ecs.GetFilter[ecs.Inc1[C1]](w)
+	// entities := make([]int, 0, 4)
 	for i := 0; i < 3; i++ {
-		entities = append(entities, w.NewEntity())
+		p.Add(w.NewEntity())
+		// entities = append(entities, e)
 	}
-	for _, entity := range entities {
-		w.DelEntity(entity)
-	}
+	// for _, entity := range entities {
+	// 	w.DelEntity(entity)
+	// }
 	w.Destroy()
 }
 
@@ -85,5 +88,50 @@ func TestWorldGenEntityOverflow(t *testing.T) {
 		t.Errorf("invalid entity gen on overflow: %d.", gen)
 	}
 	w.DelEntity(e)
+	w.Destroy()
+}
+
+type worldEventListener struct{}
+
+func (l *worldEventListener) OnEntityCreated(entity int)        {}
+func (l *worldEventListener) OnEntityChanged(entity int)        {}
+func (l *worldEventListener) OnEntityDestroyed(entity int)      {}
+func (l *worldEventListener) OnWorldResized(newSize int)        {}
+func (l *worldEventListener) OnWorldDestroyed(world *ecs.World) {}
+
+func TestWorldDebugListeners(t *testing.T) {
+	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 2})
+	listener := worldEventListener{}
+	w.AddEventListener(&listener)
+	p := ecs.GetPool[C1](w)
+	_ = ecs.GetFilter[ecs.Inc1[C1]](w)
+	for i := 0; i < 3; i++ {
+		p.Add(w.NewEntity())
+	}
+	w.Destroy()
+	w.RemoveEventListener(&listener)
+}
+
+func TestWorldGetComponentsInfo(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C1](w)
+	f := ecs.GetFilter[ecs.Inc1[C1]](w)
+	for i := 0; i < 3; i++ {
+		p.Add(w.NewEntity())
+	}
+	var typesList []reflect.Type
+	var valuesList []any
+	for it := f.Iter(); it.Next(); {
+		typesList = w.GetComponentTypes(it.GetEntity(), typesList)
+		if len(typesList) != 1 {
+			t.Errorf("invalid component types list")
+		}
+		typesList = typesList[:0]
+		valuesList = w.GetComponentValues(it.GetEntity(), valuesList)
+		if len(valuesList) != 1 {
+			t.Errorf("invalid component values list")
+		}
+		valuesList = valuesList[:0]
+	}
 	w.Destroy()
 }

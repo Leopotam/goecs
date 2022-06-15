@@ -29,12 +29,26 @@ type entityData struct {
 	gen             int16
 }
 
+type IWorldEventListener interface {
+	OnEntityCreated(entity int)
+	OnEntityChanged(entity int)
+	OnEntityDestroyed(entity int)
+	OnWorldResized(newSize int)
+	OnWorldDestroyed(world *World)
+}
+
 type World struct {
 	config              WorldConfig
 	entities            []entityData
-	pools               map[reflect.Type]IPool
 	entitiesRecycled    []int
+	pools               []IPool
+	poolsHashes         map[reflect.Type]IPool
+	filterMaskCache     [][]int
+	filtersHashes       map[int]*Filter
+	filtersByIncludes   [][]*Filter
+	filtersByExcludes   [][]*Filter
 	debugLeakedEntities []int
+	debugEventListeners []IWorldEventListener
 }
 
 func NewWorld() *World {
@@ -60,8 +74,12 @@ func NewWorldWithConfig(config WorldConfig) *World {
 	w := &World{}
 	w.config = config
 	w.entities = make([]entityData, 0, config.WorldEntitiesSize)
-	w.pools = make(map[reflect.Type]IPool, config.WorldPoolsSize)
 	w.entitiesRecycled = make([]int, 0, config.WorldEntitiesRecycledSize)
+	w.pools = make([]IPool, 0, config.WorldPoolsSize)
+	w.poolsHashes = make(map[reflect.Type]IPool, config.WorldPoolsSize)
+	w.filtersHashes = make(map[int]*Filter, config.WorldPoolsSize)
+	w.filtersByIncludes = make([][]*Filter, config.WorldPoolsSize)
+	w.filtersByExcludes = make([][]*Filter, config.WorldPoolsSize)
 	if DEBUG {
 		w.debugLeakedEntities = make([]int, 0, 512)
 	}
@@ -71,7 +89,7 @@ func NewWorldWithConfig(config WorldConfig) *World {
 func (w *World) Destroy() {
 	if DEBUG {
 		if debugCheckWorldForLeakedEntities(w) {
-			panic("Empty entity detected before EcsWorld.Destroy().")
+			panic("empty entity detected before EcsWorld.Destroy()")
 		}
 	}
 	for i := 0; i < len(w.entities); i++ {
@@ -80,10 +98,21 @@ func (w *World) Destroy() {
 		}
 	}
 	w.entities = w.entities[:0]
-	for k := range w.pools {
-		delete(w.pools, k)
+	for k := range w.poolsHashes {
+		delete(w.poolsHashes, k)
 	}
+	w.pools = w.pools[:0]
 	w.entitiesRecycled = w.entitiesRecycled[:0]
+	for k := range w.filtersHashes {
+		delete(w.filtersHashes, k)
+	}
+	w.filtersByIncludes = w.filtersByIncludes[:0]
+	w.filtersByExcludes = w.filtersByExcludes[:0]
+	if DEBUG {
+		for _, l := range w.debugEventListeners {
+			l.OnWorldDestroyed(w)
+		}
+	}
 }
 
 func (w *World) NewEntity() int {
@@ -105,10 +134,21 @@ func (w *World) NewEntity() int {
 			for _, p := range w.pools {
 				p.Resize(newCap)
 			}
+			for _, f := range w.filtersHashes {
+				f.resizeSparseIndex(newCap)
+			}
+			if DEBUG {
+				for _, l := range w.debugEventListeners {
+					l.OnWorldResized(entity)
+				}
+			}
 		}
 	}
 	if DEBUG {
 		w.debugLeakedEntities = append(w.debugLeakedEntities, entity)
+		for _, l := range w.debugEventListeners {
+			l.OnEntityCreated(entity)
+		}
 	}
 	return entity
 }
@@ -116,7 +156,7 @@ func (w *World) NewEntity() int {
 func (w *World) DelEntity(entity int) {
 	if DEBUG {
 		if entity < 0 || entity >= len(w.entities) {
-			panic("Cant touch invalid entity.")
+			panic("cant touch invalid entity")
 		}
 	}
 	entityData := &w.entities[entity]
@@ -140,19 +180,49 @@ func (w *World) DelEntity(entity int) {
 		entityData.gen = -(entityData.gen + 1)
 	}
 	w.entitiesRecycled = append(w.entitiesRecycled, entity)
+	if DEBUG {
+		for _, l := range w.debugEventListeners {
+			l.OnEntityDestroyed(entity)
+		}
+	}
 }
 
 func (w *World) GetEntityGen(entity int) int16 {
 	return w.entities[entity].gen
 }
 
+func (w *World) GetComponentValues(entity int, list []any) []any {
+	if w.entities[entity].ComponentsCount > 0 {
+		for _, p := range w.pools {
+			if p.Has(entity) {
+				list = append(list, p.GetRaw(entity))
+			}
+		}
+	}
+	return list
+}
+
+func (w *World) GetComponentTypes(entity int, list []reflect.Type) []reflect.Type {
+	if w.entities[entity].ComponentsCount > 0 {
+		for _, p := range w.pools {
+			if p.Has(entity) {
+				list = append(list, p.GetItemType())
+			}
+		}
+	}
+	return list
+}
+
 func GetPool[T any](w *World) *Pool[T] {
 	itemType := reflect.TypeOf((*T)(nil))
-	if pool, ok := w.pools[itemType]; ok {
+	if pool, ok := w.poolsHashes[itemType]; ok {
 		return pool.(*Pool[T])
 	}
-	pool := newPool[T](w, w.config.PoolDenseSize, cap(w.entities), w.config.PoolRecycledSize)
-	w.pools[itemType] = pool
+	pool := newPool[T](w, len(w.pools), w.config.PoolDenseSize, cap(w.entities), w.config.PoolRecycledSize)
+	w.poolsHashes[itemType] = pool
+	w.pools = append(w.pools, pool)
+	w.filtersByIncludes = append(w.filtersByIncludes, nil)
+	w.filtersByExcludes = append(w.filtersByExcludes, nil)
 	return pool
 }
 

@@ -23,7 +23,7 @@ go build -ldflags "-w -s" -tags "RELEASE" .
     * [World](#World)
     * [Pool](#Pool)
     * [Systems](#Systems)
-    * [Query](#Query)
+    * [Filter](#Filter)
 * [Расширения](#Расширения)
 * [Лицензия](#Лицензия)
 * [ЧаВо](#ЧаВо)
@@ -162,7 +162,7 @@ func main() {
 
 > **ВАЖНО!** Необходимо вызывать `Systems.Destroy()` у экземпляра группы систем если он больше не нужен.
 
-## Query
+## Filter
 Представляют собой механизм итерирования по сущностям, выбранным на основе определенных требований к компонентам (наличию или отсутствию):
 ```go
 type C1{}
@@ -171,14 +171,14 @@ type C3{}
 
 w := ecs.NewWorld()
 // В выборку попадут все сущности с компонентом C1.
-q1 := ecs.NewQuery[ecs.Inc1[C1]](w)
+f1 := ecs.GetFilter[ecs.Inc1[C1]](w)
 // В выборку попадут все сущности с компонентами C1 и C2 одновременно.
-q2 := ecs.NewQuery[ecs.Inc2[C1, C2]](w)
+f2 := ecs.GetFilter[ecs.Inc2[C1, C2]](w)
 // В выборку попадут все сущности с компонентами C1 и C2 и без C3 одновременно.
-q3 := ecs.NewQueryWithExc[ecs.Inc2[C1, C2], ecs.Exc1[C3]](w)
+f3 := ecs.GetFilterWithExc[ecs.Inc2[C1, C2], ecs.Exc1[C3]](w)
 
 // Способ обработки у всех запросов одинаков:
-for it := q1.Iter(); it.Next(); {
+for it := f1.Iter(); it.Next(); {
     entity := it.GetEntity()
     // Дальнейшая работа с сущностью.
 }
@@ -186,7 +186,7 @@ for it := q1.Iter(); it.Next(); {
 
 # Расширения
 
-* [Инъекция зависимостей](https://github.com/leopotam/goecs-di)
+* [Инъекция зависимостей](https://github.com/leopotam/goecs/tree/develop/pkg/ecsdi)
 
 # Лицензия
 Фреймворк выпускается под двумя лицензиями, [подробности тут](./LICENSE.md).
@@ -227,5 +227,58 @@ if unpackedEntity1, ok := packedEntity.Unpack(w); ok {
 packedEntityWithWorld := w.PackEntityWithWorld(e)
 if unpackedWorld, unpackedEntity2, ok := packedEntityWithWorld.Unpack(); ok {
     // unpackedEntity2 - сущность жива и может быть использована.
+}
+```
+
+## Мне нужно больше чем 6-"Include" и 3-"Exclude" ограничений для компонентов в фильтре. Как я могу сделать это?
+Для расширения списка `include`-требований необходимо создать новый тип, реализующий `IInc`-интерфейс. Например, нужна поддержка 7 компонентов:
+```go
+type Inc7[I1 any, I2 any, I3 any, I4 any, I5 any, I6 any, I7 any] struct {
+	Inc1 *ecs.Pool[I1]
+	Inc2 *ecs.Pool[I2]
+	Inc3 *ecs.Pool[I3]
+	Inc4 *ecs.Pool[I4]
+    Inc5 *ecs.Pool[I5]
+	Inc6 *ecs.Pool[I6]
+	Inc7 *ecs.Pool[I7]
+}
+
+func (i Inc7[I1, I2, I3, I4, I5, I6, I7]) FillIncludes(w *ecs.World, list []int) []int {
+	list = append(list, ecs.GetPool[I1](w).GetID())
+	list = append(list, ecs.GetPool[I2](w).GetID())
+	list = append(list, ecs.GetPool[I3](w).GetID())
+    list = append(list, ecs.GetPool[I4](w).GetID())
+	list = append(list, ecs.GetPool[I5](w).GetID())
+	list = append(list, ecs.GetPool[I6](w).GetID())
+	return append(list, ecs.GetPool[I7](w).GetID())
+}
+
+func (i Inc7[I1, I2, I3, I4, I5, I6, I7]) FillPools(w *ecs.World) ecs.IInc {
+	return &Inc7[I1, I2, I3, I4, I5, I6, I7]{
+		Inc1: ecs.GetPool[I1](w),
+		Inc2: ecs.GetPool[I2](w),
+		Inc3: ecs.GetPool[I3](w),
+		Inc4: ecs.GetPool[I4](w),
+        Inc5: ecs.GetPool[I5](w),
+		Inc6: ecs.GetPool[I6](w),
+		Inc7: ecs.GetPool[I7](w),
+	}
+}
+```
+
+Для расширения списка `exclude`-требований необходимо создать новый тип, реализующий `IExc`-интерфейс. Например, нужна поддержка 4 компонентов:
+```go
+type Exc4[E1 any, E2 any, E3 any, E4 any] struct {
+	Exc1 *ecs.Pool[E1]
+	Exc2 *ecs.Pool[E2]
+	Exc3 *ecs.Pool[E3]
+    Exc4 *ecs.Pool[E4]
+}
+
+func (e Exc4[E1, E2, E3, E4]) FillExcludes(w *ecs.World, list []int) []int {
+	list = append(list, ecs.GetPool[E1](w).GetID())
+	list = append(list, ecs.GetPool[E2](w).GetID())
+	list = append(list, ecs.GetPool[E3](w).GetID())
+	return append(list, ecs.GetPool[E4](w).GetID())
 }
 ```
