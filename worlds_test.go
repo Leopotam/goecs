@@ -18,6 +18,7 @@ type C2 struct{ ID int }
 type C3 struct{}
 type C4 struct{}
 type C5 struct{}
+type C6 struct{}
 
 func (c2 *C2) Reset() {
 	c2.ID = -1

@@ -68,18 +68,27 @@ func TestFilterConstraintFillPools(t *testing.T) {
 	var i2 ecs.Inc2[C1, C2]
 	var i3 ecs.Inc3[C1, C2, C3]
 	var i4 ecs.Inc4[C1, C2, C3, C4]
+	var i5 ecs.Inc5[C1, C2, C3, C4, C5]
+	var i6 ecs.Inc6[C1, C2, C3, C4, C5, C6]
 	i11 := i1.FillPools(w).(*ecs.Inc1[C1])
 	i21 := i2.FillPools(w).(*ecs.Inc2[C1, C2])
 	i31 := i3.FillPools(w).(*ecs.Inc3[C1, C2, C3])
 	i41 := i4.FillPools(w).(*ecs.Inc4[C1, C2, C3, C4])
-	if i41.Inc1 == nil ||
-		i41.Inc2 == nil ||
-		i41.Inc3 == nil ||
-		i41.Inc4 == nil ||
-		i41.Inc1 != i11.Inc1 ||
-		i41.Inc2 != i21.Inc2 ||
-		i41.Inc3 != i31.Inc3 ||
-		i41.Inc4 != ecs.GetPool[C4](w) {
+	i51 := i5.FillPools(w).(*ecs.Inc5[C1, C2, C3, C4, C5])
+	i61 := i6.FillPools(w).(*ecs.Inc6[C1, C2, C3, C4, C5, C6])
+
+	if i61.Inc1 == nil ||
+		i61.Inc2 == nil ||
+		i61.Inc3 == nil ||
+		i61.Inc4 == nil ||
+		i61.Inc5 == nil ||
+		i61.Inc6 == nil ||
+		i61.Inc1 != i11.Inc1 ||
+		i61.Inc2 != i21.Inc2 ||
+		i61.Inc3 != i31.Inc3 ||
+		i61.Inc4 != i41.Inc4 ||
+		i61.Inc5 != i51.Inc5 ||
+		i61.Inc6 != ecs.GetPool[C6](w) {
 		t.Errorf("pools not filled")
 	}
 	w.Destroy()
@@ -186,8 +195,11 @@ func TestFilterWithLongIncAndLongExc(t *testing.T) {
 	ecs.GetFilter[ecs.Inc2[C1, C2]](w)
 	ecs.GetFilter[ecs.Inc3[C1, C2, C3]](w)
 	ecs.GetFilter[ecs.Inc4[C1, C2, C3, C4]](w)
+	ecs.GetFilter[ecs.Inc5[C1, C2, C3, C4, C5]](w)
+	ecs.GetFilter[ecs.Inc6[C1, C2, C3, C4, C5, C6]](w)
 	ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc2[C2, C3]](w)
+	ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc3[C2, C3, C4]](w)
 	w.Destroy()
 }
 
