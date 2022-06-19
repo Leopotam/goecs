@@ -41,9 +41,9 @@ func workerProc(worker *worker) {
 
 func Run(newTask ITask, filter *ecs.Filter, chunkSize int) {
 	runSync.Lock()
+	defer runSync.Unlock()
 	count := filter.GetEntitiesCount()
 	if count <= 0 || chunkSize <= 0 {
-		runSync.Unlock()
 		return
 	}
 	maxWorkers := len(workers)
@@ -90,5 +90,4 @@ func Run(newTask ITask, filter *ecs.Filter, chunkSize int) {
 		<-v.workDone
 	}
 	task = nil
-	runSync.Unlock()
 }
