@@ -43,8 +43,11 @@ func Run(newTask ITask, filter *ecs.Filter, chunkSize int) {
 	runSync.Lock()
 	defer runSync.Unlock()
 	count := filter.GetEntitiesCount()
-	if count <= 0 || chunkSize <= 0 {
+	if count <= 0 {
 		return
+	}
+	if chunkSize <= 0 {
+		chunkSize = 1
 	}
 	maxWorkers := len(workers)
 	if maxWorkers == 0 {
