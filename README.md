@@ -186,8 +186,8 @@ for it := f1.Iter(); it.Next(); {
 
 # Расширения
 
-* [Инъекция зависимостей](https://github.com/leopotam/goecs/tree/develop/pkg/ecsdi)
-* [Многопоточная обработка](https://github.com/leopotam/goecs/tree/develop/pkg/ecsmt)
+* [Инъекция зависимостей](https://github.com/leopotam/goecs/tree/master/pkg/ecsdi)
+* [Многопоточная обработка](https://github.com/leopotam/goecs/tree/master/pkg/ecsmt)
 
 # Лицензия
 Фреймворк выпускается под двумя лицензиями, [подробности тут](./LICENSE.md).
