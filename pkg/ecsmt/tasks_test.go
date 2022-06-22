@@ -17,7 +17,7 @@ type c1 struct {
 	counter int
 }
 
-type wrkSystem struct {
+type taskSystem struct {
 	entities  int
 	chunkSize int
 	payload   int
@@ -26,25 +26,25 @@ type wrkSystem struct {
 	C1Pool    ecsdi.Pool[c1]
 }
 
-func newWrkSystem(entities, chunk, payload int) any {
-	return &wrkSystem{
+func newTaskSystem(entities, chunk, payload int) any {
+	return &taskSystem{
 		entities:  entities,
 		chunkSize: chunk,
 		payload:   payload,
 	}
 }
 
-func (s *wrkSystem) Init(systems *ecs.Systems) {
+func (s *taskSystem) Init(systems *ecs.Systems) {
 	for i := 0; i < s.entities; i++ {
 		s.C1Pool.Value.Add(s.World.Value.NewEntity())
 	}
 }
 
-func (s *wrkSystem) Run(systems *ecs.Systems) {
-	ecsmt.Run(s, s.Filter.Value, s.chunkSize)
+func (s *taskSystem) Run(systems *ecs.Systems) {
+	ecsmt.RunTask(s, s.Filter.Value, s.chunkSize)
 }
 
-func (s *wrkSystem) Process(entities []int, from, before int) {
+func (s *taskSystem) Process(entities []int, from, before int) {
 	for i := from; i < before; i++ {
 		c1 := s.Filter.Pools.Inc1.Get(entities[i])
 		for i := 0; i < s.payload; i++ {
@@ -53,10 +53,10 @@ func (s *wrkSystem) Process(entities []int, from, before int) {
 	}
 }
 
-func TestWrkDefault(t *testing.T) {
+func TestTaskDefault(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
-	s.Add(newWrkSystem(10, 1, 1))
+	s.Add(newTaskSystem(10, 0, 1))
 	ecsdi.Inject(s)
 	s.Init()
 	s.Run()
@@ -64,10 +64,10 @@ func TestWrkDefault(t *testing.T) {
 	w.Destroy()
 }
 
-func TestWrkEmptyTask(t *testing.T) {
+func TestTaskEmptyTask(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
-	s.Add(newWrkSystem(0, 5, 1))
+	s.Add(newTaskSystem(0, 5, 1))
 	ecsdi.Inject(s)
 	s.Init()
 	s.Run()
@@ -75,10 +75,10 @@ func TestWrkEmptyTask(t *testing.T) {
 	w.Destroy()
 }
 
-func TestWrkHugeData(t *testing.T) {
+func TestTaskHugeData(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
-	s.Add(newWrkSystem(100, 5, 1))
+	s.Add(newTaskSystem(100, 5, 1))
 	ecsdi.Inject(s)
 	s.Init()
 	s.Run()
@@ -86,10 +86,10 @@ func TestWrkHugeData(t *testing.T) {
 	w.Destroy()
 }
 
-func TestWrkSmallData(t *testing.T) {
+func TestTaskSmallData(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
-	s.Add(newWrkSystem(1, 50, 1))
+	s.Add(newTaskSystem(1, 50, 1))
 	ecsdi.Inject(s)
 	s.Init()
 	s.Run()
@@ -100,7 +100,7 @@ func TestWrkSmallData(t *testing.T) {
 func BenchmarkWorkers(b *testing.B) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
-	s.Add(newWrkSystem(10000, 1000, 1000))
+	s.Add(newTaskSystem(10000, 1000, 1000))
 	ecsdi.Inject(s)
 	s.Init()
 	s.Run()

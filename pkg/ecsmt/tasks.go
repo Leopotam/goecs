@@ -39,7 +39,7 @@ func workerProc(worker *worker) {
 	}
 }
 
-func Run(newTask ITask, filter *ecs.Filter, chunkSize int) {
+func RunTask(newTask ITask, filter *ecs.Filter, chunkSize int) {
 	runSync.Lock()
 	defer runSync.Unlock()
 	count := filter.GetEntitiesCount()
