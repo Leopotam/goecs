@@ -48,25 +48,25 @@ func TestWorldEmptyEntity(t *testing.T) {
 	w := ecs.NewWorld()
 	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
-			t.Errorf("code should panic.")
+			t.Errorf("code should panic")
 		}
 		world.Destroy()
 	}(w)
 	w.NewEntity()
 	w.Destroy()
-	t.Errorf("code should panic.")
+	t.Errorf("code should panic")
 }
 
 func TestWorldDelInvalidEntity(t *testing.T) {
 	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 2})
 	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
-			t.Errorf("code should panic.")
+			t.Errorf("code should panic")
 		}
 		world.Destroy()
 	}(w)
 	w.DelEntity(3)
-	t.Errorf("code should panic.")
+	t.Errorf("code should panic")
 }
 
 func TestWorldDelEntityTwice(t *testing.T) {

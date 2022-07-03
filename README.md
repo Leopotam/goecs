@@ -75,20 +75,20 @@ type RunSystem1 struct {}
 type DestroySystem1 struct {}
 type PostDestroySystem1 struct {}
 
-func (s *PreInitSystem1) PreInit(systems *ecs.Systems) {
-    // Будет вызван один раз в момент работы Systems.Init() и до срабатывания IInitSystem.Init().
+func (s *PreInitSystem1) PreInit(systems ecs.ISystems) {
+    // Будет вызван один раз в момент работы ISystems.Init() и до срабатывания IInitSystem.Init().
 }
-func (s *InitSystem1) Init(systems *ecs.Systems) {
-    // Будет вызван один раз в момент работы Systems.Init() и после срабатывания IPreInitSystem.PreInit().
+func (s *InitSystem1) Init(systems ecs.ISystems) {
+    // Будет вызван один раз в момент работы ISystems.Init() и после срабатывания IPreInitSystem.PreInit().
 }
-func (s *RunSystem1) Run(systems *ecs.Systems) {
-    // Будет вызван один раз в момент работы Systems.Run().
+func (s *RunSystem1) Run(systems ecs.ISystems) {
+    // Будет вызван один раз в момент работы ISystems.Run().
 }
-func (s *DestroySystem1) Destroy(systems *ecs.Systems) {
-    // Будет вызван один раз в момент работы Systems.Destroy() и до срабатывания IPostDestroySystem.PostDestroy().
+func (s *DestroySystem1) Destroy(systems ecs.ISystems) {
+    // Будет вызван один раз в момент работы ISystems.Destroy() и до срабатывания IPostDestroySystem.PostDestroy().
 }
-func (s *PostDestroySystem1) PostDestroy(systems *ecs.Systems) {
-    // Будет вызван один раз в момент работы Systems.Destroy() и после срабатывания IDestroySystem.Destroy().
+func (s *PostDestroySystem1) PostDestroy(systems ecs.ISystems) {
+    // Будет вызван один раз в момент работы ISystems.Destroy() и после срабатывания IDestroySystem.Destroy().
 }
 ```
 
@@ -132,7 +132,7 @@ pool.Del(entity)
 ```go
 
 var world *ecs.World
-var systems *ecs.Systems
+var systems ecs.ISystems
 
 func main() {
     // Создаем окружение, подключаем системы.
@@ -160,7 +160,7 @@ func main() {
 }
 ```
 
-> **ВАЖНО!** Необходимо вызывать `Systems.Destroy()` у экземпляра группы систем если он больше не нужен.
+> **ВАЖНО!** Необходимо вызывать `ISystems.Destroy()` у экземпляра группы систем если он больше не нужен.
 
 ## Filter
 Представляют собой механизм итерирования по сущностям, выбранным на основе определенных требований к компонентам (наличию или отсутствию):

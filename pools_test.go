@@ -39,7 +39,7 @@ func TestSamePools(t *testing.T) {
 	p1 := ecs.GetPool[C1](w)
 	p2 := ecs.GetPool[C1](w)
 	if p1 != p2 {
-		t.Errorf("pools are not equal.")
+		t.Errorf("pools are not equal")
 	}
 	w.Destroy()
 }
@@ -67,7 +67,7 @@ func TestComponentAutoReset(t *testing.T) {
 	p.Add(e)
 	c2 := p.Get(e)
 	if c2.ID != -1 {
-		t.Errorf("invalid component reset on new component.")
+		t.Errorf("invalid component reset on new component")
 	}
 	c2.ID = 1
 	w.DelEntity(e)
@@ -75,7 +75,7 @@ func TestComponentAutoReset(t *testing.T) {
 	e = w.NewEntity()
 	c2 = p.Add(e)
 	if c2.ID != -1 {
-		t.Errorf("invalid component reset on reused component.")
+		t.Errorf("invalid component reset on reused component")
 	}
 	w.Destroy()
 }
@@ -84,7 +84,7 @@ func TestGetAdditionalInfo(t *testing.T) {
 	w := ecs.NewWorld()
 	p := ecs.GetPool[C1](w)
 	if w != p.GetWorld() {
-		t.Errorf("invalid world in pool.")
+		t.Errorf("invalid world in pool")
 	}
 }
 
@@ -92,7 +92,7 @@ func TestInvalidAdd(t *testing.T) {
 	w := ecs.NewWorld()
 	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
-			t.Errorf("code should panic.")
+			t.Errorf("code should panic")
 		}
 		world.Destroy()
 	}(w)
@@ -100,20 +100,20 @@ func TestInvalidAdd(t *testing.T) {
 	e := w.NewEntity()
 	p.Add(e)
 	p.Add(e)
-	t.Errorf("code should panic.")
+	t.Errorf("code should panic")
 }
 
 func TestInvalidGet1(t *testing.T) {
 	w := ecs.NewWorld()
 	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
-			t.Errorf("code should panic.")
+			t.Errorf("code should panic")
 		}
 		world.Destroy()
 	}(w)
 	p := ecs.GetPool[C2](w)
 	p.Get(0)
-	t.Errorf("code should panic.")
+	t.Errorf("code should panic")
 }
 
 func TestInvalidGet2(t *testing.T) {
@@ -121,27 +121,27 @@ func TestInvalidGet2(t *testing.T) {
 	e := w.NewEntity()
 	defer func(world *ecs.World, entity int) {
 		if r := recover(); r == nil {
-			t.Errorf("code should panic.")
+			t.Errorf("code should panic")
 		}
 		world.DelEntity(entity)
 		world.Destroy()
 	}(w, e)
 	p := ecs.GetPool[C2](w)
 	p.Get(e)
-	t.Errorf("code should panic.")
+	t.Errorf("code should panic")
 }
 
 func TestInvalidDel1(t *testing.T) {
 	w := ecs.NewWorld()
 	defer func(world *ecs.World) {
 		if r := recover(); r == nil {
-			t.Errorf("code should panic.")
+			t.Errorf("code should panic")
 		}
 		world.Destroy()
 	}(w)
 	p := ecs.GetPool[C2](w)
 	p.Del(0)
-	t.Errorf("code should panic.")
+	t.Errorf("code should panic")
 }
 
 func TestInvalidDel2(t *testing.T) {
