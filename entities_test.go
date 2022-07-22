@@ -16,11 +16,11 @@ func TestPackedEntity(t *testing.T) {
 	e := w.NewEntity()
 	packedEntity := w.PackEntity(e)
 	if unpackedEntity, ok := packedEntity.Unpack(w); !ok || unpackedEntity != e {
-		t.Errorf("invalid packed entity.")
+		t.Errorf("invalid packed entity")
 	}
 	w.DelEntity(e)
 	if _, ok := packedEntity.Unpack(w); ok {
-		t.Errorf("invalid packed entity after removing.")
+		t.Errorf("invalid packed entity after removing")
 	}
 	w.Destroy()
 }
@@ -30,11 +30,11 @@ func TestPackedEntityWithWorld(t *testing.T) {
 	e := w.NewEntity()
 	packedEntity := w.PackEntityWithWorld(e)
 	if unpackedWorld, unpackedEntity, ok := packedEntity.Unpack(); !ok || unpackedWorld != w || unpackedEntity != e {
-		t.Errorf("invalid packed entity.")
+		t.Errorf("invalid packed entity")
 	}
 	w.DelEntity(e)
 	if _, _, ok := packedEntity.Unpack(); ok {
-		t.Errorf("invalid packed entity after removing.")
+		t.Errorf("invalid packed entity after removing")
 	}
 	w.Destroy()
 }

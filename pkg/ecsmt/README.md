@@ -37,12 +37,12 @@ type System1 struct {
     filter *ecs.Filter
     pool *ecs.Pool[c1]
 }
-func (s *System1) Init(systems *ecs.Systems) {
+func (s *System1) Init(systems ecs.ISystems) {
     w := systems.GetWorld()
     s.filter = GetFilter[ecs.Inc1[C1]](w)
     s.pool = GetPool[C1](w)
 }
-func (s *System1) Run(systems *ecs.Systems) {
+func (s *System1) Run(systems ecs.ISystems) {
     // Размер блока данных, после которого наступает разделение на несколько задач.
     chunkSize := 1000
     ecsmt.RunTask(s, s.filter, chunkSize)
@@ -73,7 +73,7 @@ type delayedSystem struct {
 	Filter        ecsdi.Filter[ecs.Inc1[c1]]
 }
 
-func (s *delayedSystem) Init(systems *ecs.Systems) {
+func (s *delayedSystem) Init(systems ecs.ISystems) {
     // Подготовим все необходимое для многопоточной обработки данных.
 
 	// Добавим сущность с компонентом, чтобы фильтр не был пустым.
@@ -85,7 +85,7 @@ func (s *delayedSystem) Init(systems *ecs.Systems) {
 	s.delayedBuffer = ecsmt.NewDelayedBuffer(s.World.Value, s.c1DelayedPool, s.c2DelayedPool)
 }
 
-func (s *delayedSystem) Run(systems *ecs.Systems) {
+func (s *delayedSystem) Run(systems ecs.ISystems) {
     // Запускаем обработку задач.
 	ecsmt.RunTask(s, s.Filter.Value, 10)
     // Применяем все изменения, которые накопились в буфере задач.

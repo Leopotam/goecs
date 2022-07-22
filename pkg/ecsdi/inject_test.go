@@ -53,17 +53,17 @@ type customSystem1 struct {
 	Data ecsdi.Custom[customData]
 }
 
-func (ws *worldSystem1) Init(s *ecs.Systems) {}
+func (ws *worldSystem1) Init(s ecs.ISystems) {}
 
-func (ps *poolSystem1) Init(s *ecs.Systems) {}
-func (ps *poolSystem2) Init(s *ecs.Systems) {}
+func (ps *poolSystem1) Init(s ecs.ISystems) {}
+func (ps *poolSystem2) Init(s ecs.ISystems) {}
 
-func (qs *filterSystem1) Init(s *ecs.Systems) {}
-func (qs *filterSystem2) Init(s *ecs.Systems) {}
-func (qs *filterSystem3) Init(s *ecs.Systems) {}
-func (qs *filterSystem4) Init(s *ecs.Systems) {}
+func (qs *filterSystem1) Init(s ecs.ISystems) {}
+func (qs *filterSystem2) Init(s ecs.ISystems) {}
+func (qs *filterSystem3) Init(s ecs.ISystems) {}
+func (qs *filterSystem4) Init(s ecs.ISystems) {}
 
-func (cs *customSystem1) Init(s *ecs.Systems) {}
+func (cs *customSystem1) Init(s ecs.ISystems) {}
 
 func TestInjectDefaultWorld(t *testing.T) {
 	w := ecs.NewWorld()
@@ -141,7 +141,7 @@ func TestInvalidPoolFromUndefinedWorld(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
 	sys := poolSystem2{}
-	defer func(world *ecs.World, systems *ecs.Systems) {
+	defer func(world *ecs.World, systems ecs.ISystems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -226,7 +226,7 @@ func TestInvalidFilterFromUndefinedWorld(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
 	sys := filterSystem3{}
-	defer func(world *ecs.World, systems *ecs.Systems) {
+	defer func(world *ecs.World, systems ecs.ISystems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}
@@ -242,7 +242,7 @@ func TestInvalidFilterWithExcFromUndefinedWorld(t *testing.T) {
 	w := ecs.NewWorld()
 	s := ecs.NewSystems(w)
 	sys := filterSystem4{}
-	defer func(world *ecs.World, systems *ecs.Systems) {
+	defer func(world *ecs.World, systems ecs.ISystems) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic.")
 		}

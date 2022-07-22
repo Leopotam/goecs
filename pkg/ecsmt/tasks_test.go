@@ -34,13 +34,13 @@ func newTaskSystem(entities, chunk, payload int) any {
 	}
 }
 
-func (s *taskSystem) Init(systems *ecs.Systems) {
+func (s *taskSystem) Init(systems ecs.ISystems) {
 	for i := 0; i < s.entities; i++ {
 		s.C1Pool.Value.Add(s.World.Value.NewEntity())
 	}
 }
 
-func (s *taskSystem) Run(systems *ecs.Systems) {
+func (s *taskSystem) Run(systems ecs.ISystems) {
 	ecsmt.RunTask(s, s.Filter.Value, s.chunkSize)
 }
 

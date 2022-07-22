@@ -21,7 +21,7 @@ type delayedAddSystem struct {
 	Filter        ecsdi.Filter[ecs.Inc1[c1]]
 }
 
-func (s *delayedAddSystem) Init(systems *ecs.Systems) {
+func (s *delayedAddSystem) Init(systems ecs.ISystems) {
 	// add one entity with required component,
 	// otherwise workers will not be started.
 	s.Filter.Pools.Inc1.Add(s.World.Value.NewEntity())
@@ -30,7 +30,7 @@ func (s *delayedAddSystem) Init(systems *ecs.Systems) {
 	s.delayedBuffer = ecsmt.NewDelayedBuffer(s.World.Value, s.c1DelayedPool)
 }
 
-func (s *delayedAddSystem) Run(systems *ecs.Systems) {
+func (s *delayedAddSystem) Run(systems ecs.ISystems) {
 	ecsmt.RunTask(s, s.Filter.Value, 10)
 	s.delayedBuffer.Process()
 }
@@ -49,11 +49,11 @@ type delayedDelEntitySystem struct {
 	Filter        ecsdi.Filter[ecs.Inc1[c1]]
 }
 
-func (s *delayedDelEntitySystem) Init(systems *ecs.Systems) {
+func (s *delayedDelEntitySystem) Init(systems ecs.ISystems) {
 	s.delayedBuffer = ecsmt.NewDelayedBuffer(s.World.Value)
 }
 
-func (s *delayedDelEntitySystem) Run(systems *ecs.Systems) {
+func (s *delayedDelEntitySystem) Run(systems ecs.ISystems) {
 	ecsmt.RunTask(s, s.Filter.Value, s.chunkSize)
 	s.delayedBuffer.Process()
 }
@@ -72,12 +72,12 @@ type delayedDelComponentSystem struct {
 	Filter        ecsdi.Filter[ecs.Inc1[c1]]
 }
 
-func (s *delayedDelComponentSystem) Init(systems *ecs.Systems) {
+func (s *delayedDelComponentSystem) Init(systems ecs.ISystems) {
 	s.c1DelayedPool = ecsmt.NewDelayedPool[c1]()
 	s.delayedBuffer = ecsmt.NewDelayedBuffer(s.World.Value, s.c1DelayedPool)
 }
 
-func (s *delayedDelComponentSystem) Run(systems *ecs.Systems) {
+func (s *delayedDelComponentSystem) Run(systems ecs.ISystems) {
 	ecsmt.RunTask(s, s.Filter.Value, s.chunkSize)
 	s.delayedBuffer.Process()
 }
@@ -96,12 +96,12 @@ type delayedHasComponentSystem struct {
 	Filter        ecsdi.Filter[ecs.Inc1[c1]]
 }
 
-func (s *delayedHasComponentSystem) Init(systems *ecs.Systems) {
+func (s *delayedHasComponentSystem) Init(systems ecs.ISystems) {
 	s.c1DelayedPool = ecsmt.NewDelayedPool[c1]()
 	s.delayedBuffer = ecsmt.NewDelayedBuffer(s.World.Value, s.c1DelayedPool)
 }
 
-func (s *delayedHasComponentSystem) Run(systems *ecs.Systems) {
+func (s *delayedHasComponentSystem) Run(systems ecs.ISystems) {
 	ecsmt.RunTask(s, s.Filter.Value, s.chunkSize)
 }
 

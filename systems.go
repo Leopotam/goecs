@@ -11,34 +11,45 @@ import (
 )
 
 type IPreInitSystem interface {
-	PreInit(systems *Systems)
+	PreInit(systems ISystems)
 }
 
 type IInitSystem interface {
-	Init(systems *Systems)
+	Init(systems ISystems)
 }
 
 type IRunSystem interface {
-	Run(systems *Systems)
+	Run(systems ISystems)
 }
 
 type IDestroySystem interface {
-	Destroy(systems *Systems)
+	Destroy(systems ISystems)
 }
 
 type IPostDestroySystem interface {
-	PostDestroy(systems *Systems)
+	PostDestroy(systems ISystems)
 }
 
-type Systems struct {
+type ISystems interface {
+	Add(system any) ISystems
+	GetAllSystems() []any
+	AddWorld(world *World, name string) ISystems
+	GetWorld(name string) *World
+	GetNamedWorlds() map[string]*World
+	Init()
+	Run()
+	Destroy()
+}
+
+type systems struct {
 	defWorld    *World
 	namedWorlds map[string]*World
 	all         []any
 	run         []IRunSystem
 }
 
-func NewSystems(world *World) *Systems {
-	return &Systems{
+func NewSystems(world *World) ISystems {
+	return &systems{
 		defWorld:    world,
 		namedWorlds: make(map[string]*World, 4),
 		all:         make([]any, 0, 128),
@@ -46,7 +57,7 @@ func NewSystems(world *World) *Systems {
 	}
 }
 
-func (s *Systems) Add(system any) *Systems {
+func (s *systems) Add(system any) ISystems {
 	if DEBUG {
 		switch system.(type) {
 		case IPreInitSystem:
@@ -65,7 +76,35 @@ func (s *Systems) Add(system any) *Systems {
 	return s
 }
 
-func (s *Systems) Init() {
+func (s *systems) GetAllSystems() []any {
+	return s.all
+}
+
+func (s *systems) AddWorld(world *World, name string) ISystems {
+	if DEBUG {
+		if _, ok := s.namedWorlds[name]; ok {
+			panic(fmt.Sprintf("world with name \"%s\" already added", name))
+		}
+	}
+	s.namedWorlds[name] = world
+	return s
+}
+
+func (s *systems) GetWorld(name string) *World {
+	if len(name) == 0 {
+		return s.defWorld
+	}
+	if world, ok := s.namedWorlds[name]; ok {
+		return world
+	}
+	return nil
+}
+
+func (s *systems) GetNamedWorlds() map[string]*World {
+	return s.namedWorlds
+}
+
+func (s *systems) Init() {
 	for _, system := range s.all {
 		if preInitSystem, ok := system.(IPreInitSystem); ok {
 			preInitSystem.PreInit(s)
@@ -90,7 +129,7 @@ func (s *Systems) Init() {
 	}
 }
 
-func (s *Systems) Run() {
+func (s *systems) Run() {
 	for _, system := range s.run {
 		system.Run(s)
 		if DEBUG {
@@ -102,7 +141,7 @@ func (s *Systems) Run() {
 	}
 }
 
-func (s *Systems) Destroy() {
+func (s *systems) Destroy() {
 	for i := len(s.all) - 1; i >= 0; i-- {
 		if destroySystem, ok := s.all[i].(IDestroySystem); ok {
 			destroySystem.Destroy(s)
@@ -125,36 +164,14 @@ func (s *Systems) Destroy() {
 			}
 		}
 	}
+	for k := range s.namedWorlds {
+		delete(s.namedWorlds, k)
+	}
 	s.all = s.all[:0]
 	s.run = s.run[:0]
 }
 
-func (s *Systems) AddWorld(world *World, name string) *Systems {
-	if DEBUG {
-		if _, ok := s.namedWorlds[name]; ok {
-			panic(fmt.Sprintf("world with name \"%s\" already added", name))
-		}
-	}
-	s.namedWorlds[name] = world
-	return s
-}
-
-func (s *Systems) GetWorld() *World {
-	return s.defWorld
-}
-
-func (s *Systems) GetWorldWithName(name string) *World {
-	if world, ok := s.namedWorlds[name]; ok {
-		return world
-	}
-	return nil
-}
-
-func (s *Systems) GetAllSystems() []any {
-	return s.all
-}
-
-func debugCheckSystemsForLeakedEntities(s *Systems) string {
+func debugCheckSystemsForLeakedEntities(s *systems) string {
 	if DEBUG {
 		if debugCheckWorldForLeakedEntities(s.defWorld) {
 			return "default"

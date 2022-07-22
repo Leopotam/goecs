@@ -13,7 +13,7 @@ import (
 )
 
 type iBuiltinInject interface {
-	fill(systems *ecs.Systems, tag string)
+	fill(systems ecs.ISystems, tag string)
 }
 type iCustomInject interface {
 	fill(injects []any)
@@ -23,29 +23,20 @@ type World struct {
 	Value *ecs.World
 }
 
-func (w *World) fill(systems *ecs.Systems, tag string) {
-	if len(tag) > 0 {
-		w.Value = systems.GetWorldWithName(tag)
-	} else {
-		w.Value = systems.GetWorld()
-	}
+func (w *World) fill(systems ecs.ISystems, tag string) {
+	w.Value = systems.GetWorld(tag)
 }
 
 type Pool[T any] struct {
 	Value *ecs.Pool[T]
 }
 
-func (p *Pool[T]) fill(systems *ecs.Systems, tag string) {
-	var w *ecs.World
-	if len(tag) > 0 {
-		w = systems.GetWorldWithName(tag)
-		if ecs.DEBUG {
-			if w == nil {
-				panic(fmt.Sprintf("cant get Filter[%s] from undefined world with name \"%s\"", reflect.TypeOf((*T)(nil)).Elem().String(), tag))
-			}
+func (p *Pool[T]) fill(systems ecs.ISystems, tag string) {
+	w := systems.GetWorld(tag)
+	if ecs.DEBUG {
+		if w == nil {
+			panic(fmt.Sprintf("cant get Filter[%s] from undefined world with name \"%s\"", reflect.TypeOf((*T)(nil)).Elem().String(), tag))
 		}
-	} else {
-		w = systems.GetWorld()
 	}
 	p.Value = ecs.GetPool[T](w)
 }
@@ -61,17 +52,12 @@ type Filter[Inc ecs.IInc] struct {
 }
 
 //lint:ignore U1000 called with reflection
-func (f *Filter[Inc]) fill(systems *ecs.Systems, tag string) {
-	var w *ecs.World
-	if len(tag) > 0 {
-		w = systems.GetWorldWithName(tag)
-		if ecs.DEBUG {
-			if w == nil {
-				panic(fmt.Sprintf("cant get Filter[%s] from undefined world with name \"%s\"", reflect.TypeOf((*Inc)(nil)).Elem().String(), tag))
-			}
+func (f *Filter[Inc]) fill(systems ecs.ISystems, tag string) {
+	w := systems.GetWorld(tag)
+	if ecs.DEBUG {
+		if w == nil {
+			panic(fmt.Sprintf("cant get Filter[%s] from undefined world with name \"%s\"", reflect.TypeOf((*Inc)(nil)).Elem().String(), tag))
 		}
-	} else {
-		w = systems.GetWorld()
 	}
 	var inc Inc
 	f.Pools = any(inc.FillPools(w)).(*Inc)
@@ -84,21 +70,16 @@ type FilterWithExc[Inc ecs.IInc, Exc ecs.IExc] struct {
 }
 
 //lint:ignore U1000 called with reflection
-func (q *FilterWithExc[Inc, Exc]) fill(systems *ecs.Systems, tag string) {
-	var w *ecs.World
-	if len(tag) > 0 {
-		w = systems.GetWorldWithName(tag)
-		if ecs.DEBUG {
-			if w == nil {
-				panic(fmt.Sprintf(
-					"cant get QueryWithExc[%s, %s] from undefined world with name \"%s\"",
-					reflect.TypeOf((*Inc)(nil)).Elem().String(),
-					reflect.TypeOf((*Exc)(nil)).Elem().String(),
-					tag))
-			}
+func (q *FilterWithExc[Inc, Exc]) fill(systems ecs.ISystems, tag string) {
+	w := systems.GetWorld(tag)
+	if ecs.DEBUG {
+		if w == nil {
+			panic(fmt.Sprintf(
+				"cant get QueryWithExc[%s, %s] from undefined world with name \"%s\"",
+				reflect.TypeOf((*Inc)(nil)).Elem().String(),
+				reflect.TypeOf((*Exc)(nil)).Elem().String(),
+				tag))
 		}
-	} else {
-		w = systems.GetWorld()
 	}
 	var inc Inc
 	q.Pools = any(inc.FillPools(w)).(*Inc)
@@ -119,7 +100,7 @@ func (c *Custom[T]) fill(injects []any) {
 	}
 }
 
-func Inject(systems *ecs.Systems, injects ...any) *ecs.Systems {
+func Inject(systems ecs.ISystems, injects ...any) ecs.ISystems {
 	injectsLen := len(injects)
 	for _, s := range systems.GetAllSystems() {
 		sType := reflect.TypeOf(s).Elem()
