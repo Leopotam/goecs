@@ -183,7 +183,13 @@ for it := f1.Iter(); it.Next(); {
     // Дальнейшая работа с сущностью.
 }
 ```
-
+> **ВАЖНО!** Необходимо вызывать `it.Destroy()` у итератора, созданного вне цикла, либо если происходит принудительное прерывание цикла до его конца:
+```go
+for it := f1.Iter(); it.Next(); {
+    it.Destroy()
+    return
+}
+```
 # Расширения
 
 * [Инъекция зависимостей](https://github.com/leopotam/goecs/tree/master/pkg/ecsdi)
@@ -244,7 +250,7 @@ type Inc7[I1 any, I2 any, I3 any, I4 any, I5 any, I6 any, I7 any] struct {
 	Inc7 *ecs.Pool[I7]
 }
 
-func (i Inc7[I1, I2, I3, I4, I5, I6, I7]) FillIncludes(w *ecs.World, list []int) []int {
+func (i Inc7[I1, I2, I3, I4, I5, I6, I7]) FillIncludes(w *ecs.World, list []int16) []int16 {
 	list = append(list, ecs.GetPool[I1](w).GetID())
 	list = append(list, ecs.GetPool[I2](w).GetID())
 	list = append(list, ecs.GetPool[I3](w).GetID())
@@ -276,7 +282,7 @@ type Exc4[E1 any, E2 any, E3 any, E4 any] struct {
     Exc4 *ecs.Pool[E4]
 }
 
-func (e Exc4[E1, E2, E3, E4]) FillExcludes(w *ecs.World, list []int) []int {
+func (e Exc4[E1, E2, E3, E4]) FillExcludes(w *ecs.World, list []int16) []int16 {
 	list = append(list, ecs.GetPool[E1](w).GetID())
 	list = append(list, ecs.GetPool[E2](w).GetID())
 	list = append(list, ecs.GetPool[E3](w).GetID())

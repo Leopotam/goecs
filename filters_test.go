@@ -156,6 +156,62 @@ func TestFilterWithTwoInc(t *testing.T) {
 	w.Destroy()
 }
 
+func TestFilterWithTwoIncReversed(t *testing.T) {
+	w := ecs.NewWorld()
+	e1 := w.NewEntity()
+	e2 := w.NewEntity()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p1.Add(e1)
+	p2.Add(e2)
+	f := ecs.GetFilter[ecs.Inc2[C2, C1]](w)
+	i := 0
+	for it := f.Iter(); it.Next(); {
+		i++
+	}
+	if i != 0 {
+		t.Errorf("invalid entities count in filter")
+	}
+
+	p1.Add(e2)
+	i = 0
+	for it := f.Iter(); it.Next(); {
+		i++
+	}
+	if i != 1 {
+		t.Errorf("invalid entities count in filter")
+	}
+
+	p2.Add(e1)
+	i = 0
+	for it := f.Iter(); it.Next(); {
+		i++
+	}
+	if i != 2 {
+		t.Errorf("invalid entities count in filter")
+	}
+
+	w.Destroy()
+}
+
+func TestFilterWithTwoIncOneExcDelInc(t *testing.T) {
+	w := ecs.NewWorld()
+	e := w.NewEntity()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p1.Add(e)
+	p2.Add(e)
+	f := ecs.GetFilterWithExc[ecs.Inc2[C1, C2], ecs.Exc1[C3]](w)
+	if f.GetEntitiesCount() != 1 {
+		t.Errorf("invalid entities count in filter")
+	}
+	p2.Del(e)
+	if f.GetEntitiesCount() != 0 {
+		t.Errorf("invalid entities count in filter")
+	}
+	w.Destroy()
+}
+
 func TestFilterWithOneIncOneExc(t *testing.T) {
 	w := ecs.NewWorld()
 	p1 := ecs.GetPool[C1](w)
@@ -292,32 +348,76 @@ func TestFilterDelComplexExcComponent(t *testing.T) {
 
 func TestFilterInvalidIterNext(t *testing.T) {
 	w := ecs.NewWorld()
-	defer func(world *ecs.World) {
-		if r := recover(); r == nil {
-			t.Errorf("code should panic")
-		}
-		world.Destroy()
-	}(w)
 	f := ecs.GetFilter[ecs.Inc1[C1]](w)
 	it := f.Iter()
 	it.Next()
 	it.Next()
-	t.Errorf("code should panic")
+	it.Destroy()
+	w.Destroy()
 }
 
 func TestFilterInvalidIterWithExcNext(t *testing.T) {
 	w := ecs.NewWorld()
-	defer func(world *ecs.World) {
-		if r := recover(); r == nil {
-			t.Errorf("code should panic")
-		}
-		world.Destroy()
-	}(w)
 	f := ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	it := f.Iter()
 	it.Next()
 	it.Next()
-	t.Errorf("code should panic")
+	it.Destroy()
+	w.Destroy()
+}
+
+func TestAddRemoveEntityToComplexFilter(t *testing.T) {
+	w := ecs.NewWorld()
+	filter_i1e2 := ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
+	filter_i2e1 := ecs.GetFilterWithExc[ecs.Inc1[C2], ecs.Exc1[C1]](w)
+	filter_i2e3 := ecs.GetFilterWithExc[ecs.Inc1[C2], ecs.Exc1[C3]](w)
+	filter_i3e1 := ecs.GetFilterWithExc[ecs.Inc1[C3], ecs.Exc1[C1]](w)
+	filter_i1 := ecs.GetFilter[ecs.Inc1[C1]](w)
+	filter_i2 := ecs.GetFilter[ecs.Inc1[C2]](w)
+
+	filters := []*ecs.Filter{filter_i1e2, filter_i2e1, filter_i2e3, filter_i3e1, filter_i1, filter_i2}
+	for i, v := range []int{0, 0, 0, 0, 0, 0} {
+		if filters[i].GetEntitiesCount() != v {
+			t.Errorf("invalid filtered entities count at %d", i)
+		}
+	}
+	entity := w.NewEntity()
+	c1Pool := ecs.GetPool[C1](w)
+	c2Pool := ecs.GetPool[C2](w)
+	c3Pool := ecs.GetPool[C3](w)
+	c1Pool.Add(entity)
+	for i, v := range []int{1, 0, 0, 0, 1, 0} {
+		if filters[i].GetEntitiesCount() != v {
+			t.Errorf("invalid filtered entities count at %d", i)
+		}
+	}
+	c2Pool.Add(entity)
+	for i, v := range []int{0, 0, 1, 0, 1, 1} {
+		if filters[i].GetEntitiesCount() != v {
+			t.Errorf("invalid filtered entities count at %d", i)
+		}
+	}
+	c1Pool.Del(entity)
+	for i, v := range []int{0, 1, 1, 0, 0, 1} {
+		if filters[i].GetEntitiesCount() != v {
+			t.Errorf("invalid filtered entities count at %d", i)
+		}
+	}
+	c1Pool.Add(entity)
+	c2Pool.Del(entity)
+	for i, v := range []int{1, 0, 0, 0, 1, 0} {
+		if filters[i].GetEntitiesCount() != v {
+			t.Errorf("invalid filtered entities count at %d", i)
+		}
+	}
+	c3Pool.Add(entity)
+	w.DelEntity(entity)
+	for i, v := range []int{0, 0, 0, 0, 0, 0} {
+		if filters[i].GetEntitiesCount() != v {
+			t.Errorf("invalid filtered entities count at %d", i)
+		}
+	}
+	w.Destroy()
 }
 
 func TestFilterInvalidDelAddRelatedComponent(t *testing.T) {
@@ -326,7 +426,7 @@ func TestFilterInvalidDelAddRelatedComponent(t *testing.T) {
 		if r := recover(); r == nil {
 			t.Errorf("code should panic")
 		}
-		world.Destroy()
+		w.Destroy()
 	}(w)
 	f := ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	p1 := ecs.GetPool[C1](w)
@@ -344,12 +444,6 @@ func TestFilterInvalidDelAddRelatedComponent(t *testing.T) {
 
 func TestFilterInvalidAddDelRelatedComponent(t *testing.T) {
 	w := ecs.NewWorld()
-	defer func(world *ecs.World) {
-		if r := recover(); r == nil {
-			t.Errorf("code should panic")
-		}
-		world.Destroy()
-	}(w)
 	f := ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
 	p1 := ecs.GetPool[C1](w)
 	p2 := ecs.GetPool[C2](w)
@@ -357,7 +451,15 @@ func TestFilterInvalidAddDelRelatedComponent(t *testing.T) {
 	e := w.NewEntity()
 	p1.Add(e)
 	p3.Add(e)
-	for it := f.Iter(); it.Next(); {
+	it := f.Iter()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic")
+		}
+		it.Destroy()
+		world.Destroy()
+	}(w)
+	for it.Next() {
 		p2.Add(it.GetEntity())
 		p2.Del(it.GetEntity())
 	}

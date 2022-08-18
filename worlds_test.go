@@ -33,15 +33,96 @@ func TestWorldResize(t *testing.T) {
 	w := ecs.NewWorldWithConfig(ecs.WorldConfig{WorldEntitiesSize: 2})
 	p := ecs.GetPool[C1](w)
 	_ = ecs.GetFilter[ecs.Inc1[C1]](w)
-	// entities := make([]int, 0, 4)
 	for i := 0; i < 3; i++ {
 		p.Add(w.NewEntity())
-		// entities = append(entities, e)
 	}
-	// for _, entity := range entities {
-	// 	w.DelEntity(entity)
-	// }
+	size := len(w.GetRawEntities())
+	if size != w.GetRawEntityItemSize()*3 {
+		t.Errorf("invalid raw entities size: %d.", size)
+	}
 	w.Destroy()
+}
+
+func TestWorldRawEntitySize(t *testing.T) {
+	compSize := 2
+	w := ecs.NewWorldWithConfig(ecs.WorldConfig{EntityComponentsSize: compSize})
+	size := w.GetRawEntityItemSize()
+	if size != (ecs.RawEntityOffsetComponents + compSize) {
+		t.Errorf("invalid raw entity item size: %d.", size)
+	}
+	w.Destroy()
+}
+
+func TestWorldEntityComponentsResize(t *testing.T) {
+	w := ecs.NewWorldWithConfig(ecs.WorldConfig{EntityComponentsSize: 2})
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	p3 := ecs.GetPool[C3](w)
+	e := w.NewEntity()
+	p1.Add(e)
+	p2.Add(e)
+	p3.Add(e)
+	w.Destroy()
+}
+
+func TestRawEntityData(t *testing.T) {
+	w := ecs.NewWorld()
+	p1 := ecs.GetPool[C1](w)
+	p2 := ecs.GetPool[C2](w)
+	f := ecs.GetFilterWithExc[ecs.Inc1[C1], ecs.Exc1[C2]](w)
+	if count := f.GetEntitiesCount(); count != 0 {
+		t.Errorf("invalid fcount: %d", count)
+	}
+	e := w.NewEntity()
+	offset := w.GetRawEntityOffset(e)
+	entites := w.GetRawEntities()
+	if gen := entites[offset+ecs.RawEntityOffsetGen]; gen != 1 {
+		t.Errorf("invalid gen: %d", gen)
+	}
+	if count := entites[offset+ecs.RawEntityOffsetComponentsCount]; count != 0 {
+		t.Errorf("invalid ccount: %d", count)
+	}
+	p1.Add(e)
+	if count := f.GetEntitiesCount(); count != 1 {
+		t.Errorf("invalid fcount: %d", count)
+	}
+	if count := entites[offset+ecs.RawEntityOffsetComponentsCount]; count != 1 {
+		t.Errorf("invalid ccount: %d", count)
+	}
+	if c1 := entites[offset+ecs.RawEntityOffsetComponents]; c1 != p1.GetID() {
+		t.Errorf("invalid c1: %d", c1)
+	}
+	p2.Add(e)
+	if count := f.GetEntitiesCount(); count != 0 {
+		t.Errorf("invalid fcount: %d", count)
+	}
+	if count := entites[offset+ecs.RawEntityOffsetComponentsCount]; count != 2 {
+		t.Errorf("invalid ccount: %d", count)
+	}
+	if c1 := entites[offset+ecs.RawEntityOffsetComponents]; c1 != p1.GetID() {
+		t.Errorf("invalid c1: %d", c1)
+	}
+	if c2 := entites[offset+ecs.RawEntityOffsetComponents+1]; c2 != p2.GetID() {
+		t.Errorf("invalid c1: %d", c2)
+	}
+	w.Destroy()
+}
+
+func TestPoolsOverflow(t *testing.T) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic")
+		}
+		world.Destroy()
+	}(w)
+	var pools []ecs.IPool
+	for i := 0; i < math.MaxInt16; i++ {
+		pools = append(pools, nil)
+	}
+	*ecs.DebugGetPoolsPtr(w) = pools
+	_ = ecs.GetPool[C1](w)
+	t.Errorf("code should panic")
 }
 
 func TestWorldEmptyEntity(t *testing.T) {
