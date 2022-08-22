@@ -15,7 +15,7 @@ type IComponentReset interface {
 }
 
 type IPool interface {
-	GetID() int
+	GetID() int16
 	GetWorld() *World
 	Resize(capacity int)
 	Has(entity int) bool
@@ -26,7 +26,7 @@ type IPool interface {
 }
 
 type Pool[T any] struct {
-	id              int
+	id              int16
 	world           *World
 	itemType        reflect.Type
 	items           []T
@@ -34,7 +34,7 @@ type Pool[T any] struct {
 	recycledIndices []int
 }
 
-func newPool[T any](world *World, id int, denseCapacity int, sparseCapacity int, recycledCapacity int) *Pool[T] {
+func newPool[T any](world *World, id int16, denseCapacity int, sparseCapacity int, recycledCapacity int) *Pool[T] {
 	p := &Pool[T]{}
 	p.id = id
 	p.world = world
@@ -45,7 +45,7 @@ func newPool[T any](world *World, id int, denseCapacity int, sparseCapacity int,
 	return p
 }
 
-func (p *Pool[T]) GetID() int {
+func (p *Pool[T]) GetID() int16 {
 	return p.id
 }
 
@@ -70,8 +70,8 @@ func (p *Pool[T]) Add(entity int) *T {
 		p.recycledIndices = p.recycledIndices[:l-1]
 	}
 	p.sparseIndices[entity] = denseIdx
-	p.world.entities[entity].ComponentsCount++
 	p.world.onEntityChange(entity, p.id, true)
+	p.world.addComponentToRawEntity(entity, p.id)
 	if DEBUG {
 		for _, l := range p.world.debugEventListeners {
 			l.OnEntityChanged(entity)
@@ -128,14 +128,14 @@ func (p *Pool[T]) Del(entity int) {
 		var defaultT T
 		p.items[denseIdx] = defaultT
 	}
-	entityData := &p.world.entities[entity]
-	entityData.ComponentsCount--
+	p.world.removeComponentFromRawEntity(entity, p.id)
+	componentsCount := p.world.GetEntityComponentsCount(entity)
 	if DEBUG {
 		for _, l := range p.world.debugEventListeners {
 			l.OnEntityChanged(entity)
 		}
 	}
-	if entityData.ComponentsCount == 0 {
+	if componentsCount == 0 {
 		p.world.DelEntity(entity)
 	}
 }

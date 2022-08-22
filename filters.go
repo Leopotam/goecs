@@ -6,14 +6,18 @@
 package ecs // import "leopotam.com/go/ecs"
 
 import (
-	"fmt"
-	"reflect"
 	"sort"
 )
 
+type int16Slice []int16
+
+func (x int16Slice) Len() int           { return len(x) }
+func (x int16Slice) Less(i, j int) bool { return x[i] < x[j] }
+func (x int16Slice) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+
 type mask struct {
-	include []int
-	exclude []int
+	include []int16
+	exclude []int16
 	hash    int
 }
 
@@ -23,16 +27,17 @@ type delayedOp struct {
 }
 
 type IInc interface {
-	FillIncludes(w *World, list []int) []int
+	FillIncludes(w *World, list []int16) []int16
 	FillPools(w *World) IInc
 }
 
 type IExc interface {
-	FillExcludes(w *World, list []int) []int
+	FillExcludes(w *World, list []int16) []int16
 }
 
 type FilterIter struct {
 	f      *Filter
+	locked bool
 	denses []int
 	length int
 	idx    int
@@ -42,7 +47,7 @@ type FilterIter struct {
 func (i *FilterIter) Next() bool {
 	i.idx++
 	if i.idx >= i.length {
-		i.f.unlock()
+		i.Destroy()
 		return false
 	}
 	i.entity = i.denses[i.idx]
@@ -51,6 +56,13 @@ func (i *FilterIter) Next() bool {
 
 func (i *FilterIter) GetEntity() int {
 	return i.entity
+}
+
+func (i *FilterIter) Destroy() {
+	if i.locked {
+		i.locked = false
+		i.f.unlock()
+	}
 }
 
 type Filter struct {
@@ -62,28 +74,28 @@ type Filter struct {
 	locks   int
 }
 
-func newFilter(world *World, mask *mask, denseCapacity int, sparseCapacity int) *Filter {
+func newFilter(w *World, mask *mask, denseCapacity int, sparseCapacity int) *Filter {
 	f := &Filter{
-		world:   world,
+		world:   w,
 		mask:    mask,
 		densed:  make([]int, 0, denseCapacity),
 		sparsed: make([]int, sparseCapacity),
 		delayed: make([]delayedOp, 0, 512),
 	}
-	world.filtersHashes[mask.hash] = f
+	w.filtersHashes[mask.hash] = f
 	for _, v := range mask.include {
-		l := world.filtersByIncludes[v]
+		l := w.filtersByIncludes[v]
 		l = append(l, f)
-		world.filtersByIncludes[v] = l
+		w.filtersByIncludes[v] = l
 	}
 	for _, v := range mask.exclude {
-		l := world.filtersByExcludes[v]
+		l := w.filtersByExcludes[v]
 		l = append(l, f)
-		world.filtersByExcludes[v] = l
+		w.filtersByExcludes[v] = l
 	}
 	// scan exist entities for compatibility with new filter.
-	for i, v := range world.entities {
-		if v.ComponentsCount > 0 && world.isMaskCompatible(mask, i) {
+	for i, iMax := 0, len(w.entities)/w.entitiesItemSize; i < iMax; i++ {
+		if w.entities[w.GetRawEntityOffset(i)+RawEntityOffsetComponentsCount] > 0 && w.isMaskCompatible(mask, i) {
 			f.addEntity(i)
 		}
 	}
@@ -104,7 +116,7 @@ func (w *World) isMaskCompatible(m *mask, entity int) bool {
 	return true
 }
 
-func (w *World) isMaskCompatibleWithout(m *mask, entity int, componentID int) bool {
+func (w *World) isMaskCompatibleWithout(m *mask, entity int, componentID int16) bool {
 	for _, typeID := range m.include {
 		if typeID == componentID || !w.pools[typeID].Has(entity) {
 			return false
@@ -118,7 +130,7 @@ func (w *World) isMaskCompatibleWithout(m *mask, entity int, componentID int) bo
 	return true
 }
 
-func (w *World) onEntityChange(entity int, componentID int, added bool) {
+func (w *World) onEntityChange(entity int, componentID int16, added bool) {
 	var includeList = w.filtersByIncludes[componentID]
 	var excludeList = w.filtersByExcludes[componentID]
 	if added {
@@ -191,11 +203,6 @@ func (f *Filter) removeEntity(entity int) {
 }
 
 func (f *Filter) unlock() {
-	if DEBUG {
-		if f.locks <= 0 {
-			panic(fmt.Sprintf("invalid lock-unlock balance for \"%s\"", reflect.TypeOf(f).String()))
-		}
-	}
 	f.locks--
 	if f.locks == 0 && len(f.delayed) > 0 {
 		for _, op := range f.delayed {
@@ -217,6 +224,7 @@ func (f *Filter) Iter() FilterIter {
 	f.locks++
 	return FilterIter{
 		f:      f,
+		locked: true,
 		denses: f.densed,
 		length: len(f.densed),
 		idx:    -1,
@@ -239,20 +247,20 @@ func (f *Filter) GetSparseIndices() []int {
 	return f.sparsed
 }
 
-func (w *World) requestMaskCache() []int {
-	var c []int
+func (w *World) requestMaskCache() []int16 {
+	var c []int16
 	if l := len(w.filterMaskCache); l > 0 {
 		l--
 		c = w.filterMaskCache[l]
 		w.filterMaskCache[l] = nil
 		w.filterMaskCache = w.filterMaskCache[:l]
 	} else {
-		c = make([]int, 0, 16)
+		c = make([]int16, 0, 16)
 	}
 	return c
 }
 
-func (w *World) recycleMaskCache(c []int) {
+func (w *World) recycleMaskCache(c []int16) {
 	c = c[:0]
 	w.filterMaskCache = append(w.filterMaskCache, c)
 }
@@ -260,16 +268,16 @@ func (w *World) recycleMaskCache(c []int) {
 func GetFilter[I IInc](w *World) *Filter {
 	var i I
 	inc := i.FillIncludes(w, w.requestMaskCache())
-	sort.Ints(inc)
+	sort.Sort(int16Slice(inc))
 	hash := len(inc)
 	for _, v := range inc {
-		hash = hash*314159 + v
+		hash = hash*314159 + int(v)
 	}
 	if f, ok := w.filtersHashes[hash]; ok {
 		w.recycleMaskCache(inc)
 		return f
 	}
-	return newFilter(w, &mask{include: inc, hash: hash}, w.config.PoolDenseSize, cap(w.entities))
+	return newFilter(w, &mask{include: inc, hash: hash}, w.config.PoolDenseSize, w.GetWorldSize())
 }
 
 func GetFilterWithExc[I IInc, E IExc](w *World) *Filter {
@@ -277,28 +285,28 @@ func GetFilterWithExc[I IInc, E IExc](w *World) *Filter {
 	var e E
 	inc := i.FillIncludes(w, w.requestMaskCache())
 	exc := e.FillExcludes(w, w.requestMaskCache())
-	sort.Ints(inc)
-	sort.Ints(exc)
+	sort.Sort(int16Slice(inc))
+	sort.Sort(int16Slice(exc))
 	hash := len(inc) + len(exc)
 	for _, v := range inc {
-		hash = hash*314159 + v
+		hash = hash*314159 + int(v)
 	}
 	for _, v := range exc {
-		hash = hash*314159 - v
+		hash = hash*314159 - int(v)
 	}
 	if f, ok := w.filtersHashes[hash]; ok {
 		w.recycleMaskCache(inc)
 		w.recycleMaskCache(exc)
 		return f
 	}
-	return newFilter(w, &mask{include: inc, exclude: exc, hash: hash}, w.config.PoolDenseSize, cap(w.entities))
+	return newFilter(w, &mask{include: inc, exclude: exc, hash: hash}, w.config.PoolDenseSize, w.GetWorldSize())
 }
 
 type Inc1[I1 any] struct {
 	Inc1 *Pool[I1]
 }
 
-func (i Inc1[I1]) FillIncludes(w *World, list []int) []int {
+func (i Inc1[I1]) FillIncludes(w *World, list []int16) []int16 {
 	return append(list, GetPool[I1](w).GetID())
 }
 
@@ -313,7 +321,7 @@ type Inc2[I1 any, I2 any] struct {
 	Inc2 *Pool[I2]
 }
 
-func (i Inc2[I1, I2]) FillIncludes(w *World, list []int) []int {
+func (i Inc2[I1, I2]) FillIncludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[I1](w).GetID())
 	return append(list, GetPool[I2](w).GetID())
 }
@@ -331,7 +339,7 @@ type Inc3[I1 any, I2 any, I3 any] struct {
 	Inc3 *Pool[I3]
 }
 
-func (i Inc3[I1, I2, I3]) FillIncludes(w *World, list []int) []int {
+func (i Inc3[I1, I2, I3]) FillIncludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[I1](w).GetID())
 	list = append(list, GetPool[I2](w).GetID())
 	return append(list, GetPool[I3](w).GetID())
@@ -352,7 +360,7 @@ type Inc4[I1 any, I2 any, I3 any, I4 any] struct {
 	Inc4 *Pool[I4]
 }
 
-func (i Inc4[I1, I2, I3, I4]) FillIncludes(w *World, list []int) []int {
+func (i Inc4[I1, I2, I3, I4]) FillIncludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[I1](w).GetID())
 	list = append(list, GetPool[I2](w).GetID())
 	list = append(list, GetPool[I3](w).GetID())
@@ -376,7 +384,7 @@ type Inc5[I1 any, I2 any, I3 any, I4 any, I5 any] struct {
 	Inc5 *Pool[I5]
 }
 
-func (i Inc5[I1, I2, I3, I4, I5]) FillIncludes(w *World, list []int) []int {
+func (i Inc5[I1, I2, I3, I4, I5]) FillIncludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[I1](w).GetID())
 	list = append(list, GetPool[I2](w).GetID())
 	list = append(list, GetPool[I3](w).GetID())
@@ -403,7 +411,7 @@ type Inc6[I1 any, I2 any, I3 any, I4 any, I5 any, I6 any] struct {
 	Inc6 *Pool[I6]
 }
 
-func (i Inc6[I1, I2, I3, I4, I5, I6]) FillIncludes(w *World, list []int) []int {
+func (i Inc6[I1, I2, I3, I4, I5, I6]) FillIncludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[I1](w).GetID())
 	list = append(list, GetPool[I2](w).GetID())
 	list = append(list, GetPool[I3](w).GetID())
@@ -425,20 +433,20 @@ func (i Inc6[I1, I2, I3, I4, I5, I6]) FillPools(w *World) IInc {
 
 type Exc1[E1 any] struct{}
 
-func (e Exc1[E1]) FillExcludes(w *World, list []int) []int {
+func (e Exc1[E1]) FillExcludes(w *World, list []int16) []int16 {
 	return append(list, GetPool[E1](w).GetID())
 }
 
 type Exc2[E1 any, E2 any] struct{}
 
-func (e Exc2[E1, E2]) FillExcludes(w *World, list []int) []int {
+func (e Exc2[E1, E2]) FillExcludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[E1](w).GetID())
 	return append(list, GetPool[E2](w).GetID())
 }
 
 type Exc3[E1 any, E2 any, E3 any] struct{}
 
-func (e Exc3[E1, E2, E3]) FillExcludes(w *World, list []int) []int {
+func (e Exc3[E1, E2, E3]) FillExcludes(w *World, list []int16) []int16 {
 	list = append(list, GetPool[E1](w).GetID())
 	list = append(list, GetPool[E2](w).GetID())
 	return append(list, GetPool[E3](w).GetID())

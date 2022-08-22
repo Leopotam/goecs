@@ -21,7 +21,7 @@ func (w *World) PackEntity(entity int) PackedEntity {
 }
 
 func (pe PackedEntity) Unpack(w *World) (int, bool) {
-	if !w.checkEntityAlive(pe.id) || w.GetEntityGen(pe.id) != int16(pe.gen) {
+	if !w.checkEntityAlive(pe.id) || w.GetEntityGen(pe.id) != pe.gen {
 		return 0, false
 	}
 	return pe.id, true
