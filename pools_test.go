@@ -152,3 +152,61 @@ func TestInvalidDel2(t *testing.T) {
 	w.DelEntity(e)
 	w.Destroy()
 }
+
+func TestCopyComponentToEmpty(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C2](w)
+	srcE := w.NewEntity()
+	dstE := w.NewEntity()
+	srcC := p.Add(srcE)
+	srcC.ID = 123
+	p.Copy(srcE, dstE)
+	dstC := p.Get(dstE)
+	if srcC.ID*2 != dstC.ID {
+		t.Errorf("invalid component data")
+	}
+	w.Destroy()
+}
+
+func TestCopyComponentDefault(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C3](w)
+	srcE := w.NewEntity()
+	dstE := w.NewEntity()
+	srcC := p.Add(srcE)
+	srcC.ID = 123
+	p.Copy(srcE, dstE)
+	dstC := p.Get(dstE)
+	if srcC.ID != dstC.ID {
+		t.Errorf("invalid component data")
+	}
+	w.Destroy()
+}
+
+func TestInvalidCopyNoSrcEntity(t *testing.T) {
+	w := ecs.NewWorld()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic")
+		}
+		world.Destroy()
+	}(w)
+	p := ecs.GetPool[C2](w)
+	p.Copy(0, 1)
+	t.Errorf("code should panic")
+}
+
+func TestInvalidCopyNoDstEntity(t *testing.T) {
+	w := ecs.NewWorld()
+	srcE := w.NewEntity()
+	defer func(world *ecs.World) {
+		if r := recover(); r == nil {
+			t.Errorf("code should panic")
+		}
+		world.DelEntity(srcE)
+		world.Destroy()
+	}(w)
+	p := ecs.GetPool[C2](w)
+	p.Copy(srcE, 1)
+	t.Errorf("code should panic")
+}
