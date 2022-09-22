@@ -14,6 +14,10 @@ type IComponentReset interface {
 	Reset()
 }
 
+type IComponentCopy[T any] interface {
+	Copy(src *T)
+}
+
 type IPool interface {
 	GetID() int16
 	GetWorld() *World
@@ -23,6 +27,7 @@ type IPool interface {
 	GetSparseIndices() []int
 	GetRaw(entity int) any
 	GetItemType() reflect.Type
+	Copy(srcEntity, dstEntity int)
 }
 
 type Pool[T any] struct {
@@ -150,4 +155,27 @@ func (p *Pool[T]) GetRaw(entity int) any {
 
 func (p *Pool[T]) GetItemType() reflect.Type {
 	return p.itemType
+}
+
+func (p *Pool[T]) Copy(srcEntity, dstEntity int) {
+	if DEBUG {
+		if !p.world.checkEntityAlive(srcEntity) {
+			panic("cant touch destroyed src-entity")
+		}
+		if !p.world.checkEntityAlive(dstEntity) {
+			panic("cant touch destroyed dst-entity")
+		}
+	}
+	if p.Has(srcEntity) {
+		srcData := p.Get(srcEntity)
+		if !p.Has(dstEntity) {
+			p.Add(dstEntity)
+		}
+		dstData := p.Get(dstEntity)
+		if c, ok := any(dstData).(IComponentCopy[T]); ok {
+			c.Copy(srcData)
+		} else {
+			*dstData = *srcData
+		}
+	}
 }

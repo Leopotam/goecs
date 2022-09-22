@@ -228,6 +228,17 @@ func (w *World) GetComponentValues(entity int, list []any) []any {
 	return list
 }
 
+func (w *World) CopyEntity(srcEntity, dstEntity int) {
+	entityOffset := w.GetRawEntityOffset(srcEntity)
+	itemsCount := int(w.entities[entityOffset+RawEntityOffsetComponentsCount])
+	if itemsCount > 0 {
+		dataOffset := entityOffset + RawEntityOffsetComponents
+		for i := 0; i < itemsCount; i++ {
+			w.pools[w.entities[dataOffset+i]].Copy(srcEntity, dstEntity)
+		}
+	}
+}
+
 func (w *World) GetComponentTypes(entity int, list []reflect.Type) []reflect.Type {
 	entityOffset := w.GetRawEntityOffset(entity)
 	itemsCount := int(w.entities[entityOffset+RawEntityOffsetComponentsCount])

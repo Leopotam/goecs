@@ -15,13 +15,17 @@ import (
 
 type C1 struct{}
 type C2 struct{ ID int }
-type C3 struct{}
+type C3 struct{ ID int }
 type C4 struct{}
 type C5 struct{}
 type C6 struct{}
 
 func (c2 *C2) Reset() {
 	c2.ID = -1
+}
+
+func (c2 *C2) Copy(src *C2) {
+	c2.ID = src.ID * 2
 }
 
 func TestWorldCreate(t *testing.T) {
@@ -214,6 +218,21 @@ func TestWorldGetComponentsInfo(t *testing.T) {
 			t.Errorf("invalid component values list")
 		}
 		valuesList = valuesList[:0]
+	}
+	w.Destroy()
+}
+
+func TestCopyEntity(t *testing.T) {
+	w := ecs.NewWorld()
+	p := ecs.GetPool[C2](w)
+	srcE := w.NewEntity()
+	dstE := w.NewEntity()
+	srcC := p.Add(srcE)
+	srcC.ID = 123
+	w.CopyEntity(srcE, dstE)
+	dstC := p.Get(dstE)
+	if srcC.ID*2 != dstC.ID {
+		t.Errorf("invalid component data")
 	}
 	w.Destroy()
 }
